@@ -30,7 +30,8 @@ Plot.plot({
 <!-- the rest of this stuff is for the popup! -->
 
 ```{ojs}
-//| include: false
+
+// include: false
 
 // this code gets it set up and ready to open
 micro = require("micromodal@0.4.10");
