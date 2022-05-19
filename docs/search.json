@@ -1,0 +1,23 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Quarto experiments",
+    "section": "",
+    "text": "modal-dialog: add a popup to your report/blog post/slides"
+  },
+  {
+    "objectID": "modal-dialog/index.html",
+    "href": "modal-dialog/index.html",
+    "title": "Chart with popup dialog",
+    "section": "",
+    "text": "Click to see a popup!\nHere’s a quick chart:"
+  },
+  {
+    "objectID": "modal-dialog/index.html#mymodal-title",
+    "href": "modal-dialog/index.html#mymodal-title",
+    "title": "Chart with popup dialog",
+    "section": "Look at this cool chart!",
+    "text": "Look at this cool chart!"
+  }
+]
