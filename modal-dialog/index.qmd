@@ -6,9 +6,7 @@ execute:
 format:
   html:
     resources: "*.csv"
-    include-in-header:
-      # adds some css to hide/animate the modal
-      file: modal.html
+    css: modal.css
 ---
 
 <!-- here's the link that opens it. it can be anywhere!
