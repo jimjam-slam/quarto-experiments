@@ -5,8 +5,10 @@ execute:
   echo: false
 format:
   html:
+    resources: "*.csv"
     include-in-header:
-      file: modal.css
+      # adds some css to hide/animate the modal
+      file: modal.html
 ---
 
 <!-- here's the link that opens it. it can be anywhere!

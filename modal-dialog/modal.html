@@ -1,0 +1,57 @@
+<style>
+  /* micromodal css: essentials for toggling/animating the dialog
+    (otherwise it just sits there on the page!)
+  */
+  .modal__overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal__container {
+    background-color: #fff;
+    padding: 30px;
+    max-width: 500px;
+    max-height: 100vh;
+    border-radius: 4px;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .micromodal-slide {
+    display: none;
+  }
+
+  .micromodal-slide.is-open {
+    display: block;
+  }
+
+  .micromodal-slide[aria-hidden="true"] .modal__overlay {
+    animation: mmfadeOut .3s cubic-bezier(0.0, 0.0, 0.2, 1);
+  }
+
+  .micromodal-slide[aria-hidden="true"] .modal__container {
+    animation: mmslideOut .3s cubic-bezier(0, 0, .2, 1);
+  }
+
+  .micromodal-slide .modal__container,
+  .micromodal-slide .modal__overlay {
+    will-change: transform;
+  }
+
+  .modal__close {
+    background:transparent;
+    border: 0;
+    float: right;
+  }
+
+  .modal__close::before {
+    content: "\2715";
+  }
+</style>
