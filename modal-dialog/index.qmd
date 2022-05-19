@@ -1,0 +1,59 @@
+---
+title: "Chart with popup dialog"
+subtitle: "Driven by micromodal.js"
+execute:
+  echo: false
+format:
+  html:
+    include-in-header:
+      file: modal.css
+---
+
+<!-- here's the link that opens it. it can be anywhere!
+     it matches to the modal's id, #mymodal -->
+**<a href="#" data-micromodal-trigger="mymodal" tabindex="0">Click to see a popup!</a>**
+
+Here's a quick chart:
+
+```{ojs}
+fruitData = d3.csv("data.csv");
+
+Plot.plot({
+  marks:
+    [ Plot.barY(fruitData, {x: "fruit", y: "rating", fill: "fruit"}) ],
+  x: { label: null }
+});
+```
+
+<!-- the rest of this stuff is for the popup! -->
+
+```{ojs}
+//| include: false
+
+// this code gets it set up and ready to open
+micro = require("micromodal@0.4.10");
+MicroModal.init({
+  awaitOpenAnimation: true,
+  awaitCloseAnimation: true
+});
+```
+
+<!-- and here's the popup itself! -->
+
+:::::: {#mymodal .modal .micromodal-slide aria-hidden="true"}
+::::: {.modal__overlay tabindex="-1" data-micromodal-close="true"}
+:::: {.modal__container role="dialog" aria-modal="true" aria-labelledby="mymodal-title"}
+
+<button class="modal__close" aria-label="Close modal" data-micromodal-close></button>
+
+<header>
+## Look at this cool chart! {#mymodal-title}
+</header>
+
+::: {#modal-1-content}
+I should probably tell you all about it, but 🤷🏻‍♂️
+:::
+
+::::
+:::::
+::::::

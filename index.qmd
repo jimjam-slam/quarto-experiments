@@ -1,0 +1,8 @@
+---
+title: "Quarto experiments"
+author: "James Goldie"
+---
+
+Experiments include:
+
+* [`modal-dialog`](./modal-dialog): add a popup to your report/blog post/slides
