@@ -1,5 +1,5 @@
 ---
-title: "Before-by-after image demo"
+title: "Before-and-after image demo"
 subtitle: "Driven by juxtapose.js"
 author: "James Goldie"
 css:
@@ -17,7 +17,7 @@ css:
 
 ## Step 2: Importing the module
 
-Let's try it out. JuxtaposeJS is on isDelivr, so we can just import it! It's a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, [Observable Module Require Debugger](https://observablehq.com/@observablehq/module-require-debugger)!). It produces an error but seems to work, so I just `catch` the error and ignore it:
+Let's try it out. JuxtaposeJS is on [jsDelivr](https://www.jsdelivr.com), so we can just import it! It's a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, [Observable Module Require Debugger](https://observablehq.com/@observablehq/module-require-debugger)!). It produces an error but seems to work, so I just `catch` the error and ignore it:
 
 ```{ojs}
 //| output: false
