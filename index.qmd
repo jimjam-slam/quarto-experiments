@@ -6,3 +6,4 @@ author: "James Goldie"
 Experiments include:
 
 * [`modal-dialog`](./modal-dialog): add a popup to your report/blog post/slides
+* [`juxtapose`](./juxtapose): before-and-after images with a slider

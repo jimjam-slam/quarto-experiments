@@ -1,10 +1,31 @@
 [
   {
+    "objectID": "juxtapose/index.html",
+    "href": "juxtapose/index.html",
+    "title": "Before-by-after image demo",
+    "section": "",
+    "text": "Your YAML frontmatter should include the library’s CSS (note how the examples on its GitHub README include a <link rel=\"stylesheet\"> tag!):\ncss:\n  - https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css"
+  },
+  {
+    "objectID": "juxtapose/index.html#step-2-importing-the-module",
+    "href": "juxtapose/index.html#step-2-importing-the-module",
+    "title": "Before-by-after image demo",
+    "section": "Step 2: Importing the module",
+    "text": "Step 2: Importing the module\nLet’s try it out. JuxtaposeJS is on isDelivr, so we can just import it! It’s a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, Observable Module Require Debugger!). It produces an error but seems to work, so I just catch the error and ignore it:\n\nrequire(\"https://cdn.jsdelivr.net/npm/juxtaposejs@1.1.6/build/js/juxtapose.min.js\")\n  .catch(() => null)"
+  },
+  {
+    "objectID": "juxtapose/index.html#step-3-write-the-juxtapose",
+    "href": "juxtapose/index.html#step-3-write-the-juxtapose",
+    "title": "Before-by-after image demo",
+    "section": "Step 3: Write the Juxtapose!",
+    "text": "Step 3: Write the Juxtapose!\nAnd here’s the Juxtapose code! Once the library’s loaded, you can just write it with HTML, as per the README:\n::: {.juxtapose data-startingposition=\"35%\" style=\"margin-bottom:2em\"}\n\n![](https://unsplash.com/photos/o3TZx8_j7FE/download?ixid=MnwxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNjUzMzY0ODYw&force=true&w=640){data-credit=\"Fabian Mardi on Unsplash\" data-label=\"Image A by Fabian Mardi on Unsplash\"}\n\n![](https://unsplash.com/photos/iFdPrhOPI_E/download?ixid=MnwxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNjUzMzU4Mzg0&force=true&w=640){data-credit=\"Weyne Yew on Unsplash\" data-label=\"Image B by Weyne Yew on Unsplash\"}\n\n:::\n\n\n\n\nNice! I’ve added a bit of extra margin-bottom to it so that this text clears it properly too."
+  },
+  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Quarto experiments",
     "section": "",
-    "text": "modal-dialog: add a popup to your report/blog post/slides"
+    "text": "modal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider"
   },
   {
     "objectID": "modal-dialog/index.html",
