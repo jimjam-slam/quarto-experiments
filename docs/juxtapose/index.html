@@ -8,7 +8,7 @@
 
 <meta name="author" content="James Goldie">
 
-<title>Before-by-after image demo</title>
+<title>Before-and-after image demo</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -135,7 +135,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Before-by-after image demo</h1>
+<h1 class="title">Before-and-after image demo</h1>
 <p class="subtitle lead">Driven by juxtapose.js</p>
 </div>
 
@@ -164,7 +164,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="step-2-importing-the-module" class="level2">
 <h2 class="anchored" data-anchor-id="step-2-importing-the-module">Step 2: Importing the module</h2>
-<p>Let’s try it out. JuxtaposeJS is on isDelivr, so we can just import it! It’s a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, <a href="https://observablehq.com/@observablehq/module-require-debugger">Observable Module Require Debugger</a>!). It produces an error but seems to work, so I just <code>catch</code> the error and ignore it:</p>
+<p>Let’s try it out. JuxtaposeJS is on <a href="https://www.jsdelivr.com">jsDelivr</a>, so we can just import it! It’s a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, <a href="https://observablehq.com/@observablehq/module-require-debugger">Observable Module Require Debugger</a>!). It produces an error but seems to work, so I just <code>catch</code> the error and ignore it:</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2" data-startfrom="23" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 22;"><span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a><span class="pp">require</span>(<span class="st">"https://cdn.jsdelivr.net/npm/juxtaposejs@1.1.6/build/js/juxtapose.min.js"</span>)</span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="op">.</span><span class="fu">catch</span>(() <span class="kw">=&gt;</span> <span class="kw">null</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>

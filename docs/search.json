@@ -2,21 +2,21 @@
   {
     "objectID": "juxtapose/index.html",
     "href": "juxtapose/index.html",
-    "title": "Before-by-after image demo",
+    "title": "Before-and-after image demo",
     "section": "",
     "text": "Your YAML frontmatter should include the library’s CSS (note how the examples on its GitHub README include a <link rel=\"stylesheet\"> tag!):\ncss:\n  - https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css"
   },
   {
     "objectID": "juxtapose/index.html#step-2-importing-the-module",
     "href": "juxtapose/index.html#step-2-importing-the-module",
-    "title": "Before-by-after image demo",
+    "title": "Before-and-after image demo",
     "section": "Step 2: Importing the module",
-    "text": "Step 2: Importing the module\nLet’s try it out. JuxtaposeJS is on isDelivr, so we can just import it! It’s a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, Observable Module Require Debugger!). It produces an error but seems to work, so I just catch the error and ignore it:\n\nrequire(\"https://cdn.jsdelivr.net/npm/juxtaposejs@1.1.6/build/js/juxtapose.min.js\")\n  .catch(() => null)"
+    "text": "Step 2: Importing the module\nLet’s try it out. JuxtaposeJS is on jsDelivr, so we can just import it! It’s a little stubborn, but requiring the individual file, rather than just the package name, seems to work (thanks, Observable Module Require Debugger!). It produces an error but seems to work, so I just catch the error and ignore it:\n\nrequire(\"https://cdn.jsdelivr.net/npm/juxtaposejs@1.1.6/build/js/juxtapose.min.js\")\n  .catch(() => null)"
   },
   {
     "objectID": "juxtapose/index.html#step-3-write-the-juxtapose",
     "href": "juxtapose/index.html#step-3-write-the-juxtapose",
-    "title": "Before-by-after image demo",
+    "title": "Before-and-after image demo",
     "section": "Step 3: Write the Juxtapose!",
     "text": "Step 3: Write the Juxtapose!\nAnd here’s the Juxtapose code! Once the library’s loaded, you can just write it with HTML, as per the README:\n::: {.juxtapose data-startingposition=\"35%\" style=\"margin-bottom:2em\"}\n\n![](https://unsplash.com/photos/o3TZx8_j7FE/download?ixid=MnwxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNjUzMzY0ODYw&force=true&w=640){data-credit=\"Fabian Mardi on Unsplash\" data-label=\"Image A by Fabian Mardi on Unsplash\"}\n\n![](https://unsplash.com/photos/iFdPrhOPI_E/download?ixid=MnwxMjA3fDB8MXxhbGx8fHx8fHx8fHwxNjUzMzU4Mzg0&force=true&w=640){data-credit=\"Weyne Yew on Unsplash\" data-label=\"Image B by Weyne Yew on Unsplash\"}\n\n:::\n\n\n\n\nNice! I’ve added a bit of extra margin-bottom to it so that this text clears it properly too."
   },
@@ -40,5 +40,40 @@
     "title": "Chart with popup dialog",
     "section": "Look at this cool chart!",
     "text": "Look at this cool chart!"
+  },
+  {
+    "objectID": "scrollytelling/index.html",
+    "href": "scrollytelling/index.html",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "",
+    "text": "Fancy JS libraries like scrollama.js help you track which elements are visible based on scroll so that you can do things to update them.\nBut the basics of getting elements to stick are just done with one bit of CSS: using position: sticky and then using top/left/right/bottom to define the point (for its parent block) at which the content “sticks”.\nLet’s see how that works with some standard Quarto .columns. (I’ve made also made the columns a bit wider with .column-body-outset, ’cause it looks classy.)"
+  },
+  {
+    "objectID": "scrollytelling/index.html#two-columns-one-sticky",
+    "href": "scrollytelling/index.html#two-columns-one-sticky",
+    "title": "Scrollytelling demo",
+    "section": "Two columns, one sticky",
+    "text": "Two columns, one sticky\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; top:10px on it!\n\n(figure here)"
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
+    "href": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: A sticky but static right column",
+    "text": "Demo: A sticky but static right column\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; and top:100px on it!\n\n(You could have a figure here… or some bullet points… anything that you think is relevant to an extended section of your report, really!)"
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-sticky-overlay",
+    "href": "scrollytelling/index.html#demo-sticky-overlay",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: sticky overlay",
+    "text": "Demo: sticky overlay\n::::\n\n\n\n:::  (This lighthouse photo is by Everaldo Coelho on Unsplash!)\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta. ::: ::::"
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-highlight-photo-as-we-scroll",
+    "href": "scrollytelling/index.html#demo-highlight-photo-as-we-scroll",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: highlight photo as we scroll",
+    "text": "Demo: highlight photo as we scroll\n\nThen add the HTML attributes to the content (in this case, a photo):\nLet’s start by tagging some content. In Quarto, we can create blocks with attributes using ::: {attribute=\"value\"}, so let’s create one with data-scroll-int=\"entering\" and data-scroll-int=\"leaving\".\n\n(This floral photo is by Skyler Ewing on Unsplash!)\n\n\n\n\n\n\nWarning\n\n\n\nThis isn’t working yet!\n\n\nkl; f d gdfg gg\nfdg\nfdg njkfdhjkfd gf\nd\ngvnjkdf njgkfdnkglfds ’\nfjgkj gkd fj klgjfd’"
   }
 ]

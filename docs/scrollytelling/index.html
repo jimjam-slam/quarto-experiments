@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-99.9.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="James Goldie">
+
+<title>(WIP) Scrollytelling demo</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<meta name="quarto:offset" content="../">
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<script src="../site_libs/quarto-html/quarto.js"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link id="quarto-text-highlighting-styles" href="../site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 20,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit"
+  }
+}</script>
+<script type="module" src="../site_libs/quarto-ojs/quarto-ojs-runtime.js"></script>
+<link href="../site_libs/quarto-ojs/quarto-ojs.css" rel="stylesheet">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-search-results"></div>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    
+<!-- main -->
+<main class="content page-columns page-full" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">(WIP) Scrollytelling demo</h1>
+<p class="subtitle lead">(Partially) driven by scrollama.js</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>James Goldie </p>
+          </div>
+  </div>
+    
+    
+  </div>
+  
+
+</header>
+
+<p>Fancy JS libraries like <a href="https://github.com/russellgoldenberg/scrollama"><code>scrollama.js</code></a> help you track which elements are visible based on scroll so that you can do things to update them.</p>
+<p>But the basics of getting elements to stick are just done with one bit of CSS: using <code>position: sticky</code> and then using <code>top</code>/<code>left</code>/<code>right</code>/<code>bottom</code> to define the point (for its parent block) at which the content “sticks”.</p>
+<p>Let’s see how that works with some standard Quarto <code>.columns</code>. (I’ve made also made the columns a bit wider with <code>.column-body-outset</code>, ’cause it looks classy.)</p>
+<div class="columns column-body-outset">
+<section id="demo-a-sticky-but-static-right-column" class="level2">
+<h2 class="anchored" data-anchor-id="demo-a-sticky-but-static-right-column">Demo: A sticky but static right column</h2>
+<div class="column" style="width:35%;">
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.</p>
+<p>Suspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.</p>
+<p>Cras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.</p>
+</div>
+<div class="column" style="width:10%;">
+
+</div>
+<div class="column" style="padding:20px; position:sticky;top:100px;background-color:goldenrod">
+<p>This whole column has <code>position:sticky;</code> and <code>top:100px</code> on it!</p>
+<div style="background-color: #333; color: white; height: 200px; text-align: center; padding: 20px;">
+<p>(You could have a figure here… or some bullet points… anything that you think is relevant to an extended section of your report, really!)</p>
+</div>
+</div>
+</section>
+</div>
+<section id="a-less-sticky-interlude" class="level1">
+<h1>A less sticky interlude</h1>
+<p>How did that go?</p>
+<p>Did we like it?</p>
+<p>Can we continue to scroll now that the previous section is gone?</p>
+<p>Yeah, it looks like it works!</p>
+</section>
+<section id="sticky-overlays" class="level1 page-columns page-full">
+<h1>Sticky overlays</h1>
+<p>The other common style is to have some full-width content stick but only cover part of the page.</p>
+<p>For this, we’ll need a parent to be the start/end of the sticky zone (equivalent to our <code>.columns</code> before).</p>
+<p>We’ll also need a container for our hero image that has:</p>
+<ul>
+<li><code>position:sticky</code></li>
+<li><code>top: 0</code> will make it stick once the top of the section hits the top of the screen (so you won’t see content sneaking past up the top)</li>
+<li><code>background-image: url(...)</code> loads the image into it, and</li>
+<li><code>background-size: cover</code> appropriately sizes it for all screens</li>
+<li><code>height: 60vh</code> sizes it to 60% of the screen height, leaving 40% for the text underneath.
+<ul>
+<li>(You could set it to <code>100vh</code> if you just wanted the content to be the whole jam, but since our sticky content isn’t <em>doing</em> anything yet, I think that’s a bad idea. You typically want people to see <em>something</em> happening when they scroll!)</li>
+</ul></li>
+<li>I’ve also given it Quarto’s <code>.column-screen</code> class to make it stretch across the screen.</li>
+</ul>
+<p>Let’s see how it looks!</p>
+<section id="demo-sticky-overlay" class="level2 page-columns page-full">
+<h2 class="anchored" data-anchor-id="demo-sticky-overlay">Demo: sticky overlay</h2>
+<p>::::</p>
+<div class="column-screen" style="background-image:url(https://unsplash.com/photos/KPaSCpklCZw/download?ixid=MnwxMjA3fDB8MXxzZWFyY2h8NHx8bGlnaHRob3VzZXxlbnwwfHx8fDE2NTM0OTMzOTE&amp;force=true); background-size: cover; height: 60vh; position: sticky; top: 0; ">
+
+</div>
+<p>::: <!-- we don't really need to put this stuff in a separate div, but you might choose to to make the styling more cosnsistent with the above style --> <em>(This lighthouse photo is by <a href="https://unsplash.com/photos/KPaSCpklCZw">Everaldo Coelho</a> on Unsplash!)</em></p>
+<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.</p>
+<p>Suspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.</p>
+<p>Cras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta. ::: ::::</p>
+</section>
+</section>
+<section id="review" class="level1">
+<h1>Review</h1>
+<p>This works great!</p>
+<p>Since this is all just CSS and both styles are structured very similarly, you could choose to have <em>both</em> options depending on screen size (so overlay at mobile widths and columns at desktop sizes).</p>
+<p>But so far, nothing’s <em>moving</em> or <em>changing</em>. We’ll need some JavaScript for that.</p>
+</section>
+<section id="using-scrollama.js" class="level1">
+<h1>Using <code>scrollama.js</code></h1>
+<p>Firstly, we’ll need to import the library. In Quarto, we can do that with:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1" data-startfrom="98" data-source-offset="0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 97;"><span id="cb1-98"><a href="#cb1-98" aria-hidden="true" tabindex="-1"></a>scrollama <span class="op">=</span> <span class="pp">require</span>(<span class="st">"scrollama@3.1.1"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div id="ojs-cell-1" data-nodetype="declaration">
+
+</div>
+</div>
+</div>
+<p>The idea with Scrollama is that it <a href="https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API">keeps an eye on our scrolling</a> and attaches or removes CSS classes from elements that we’ve tagged using HTML sttributes based on their visibility.</p>
+<p>This can achieve a variety of effects—not just the sticky effects we’ve used above! As well as using sticky patterns, it can draw attention to elements as they scroll in. You could have an image go from being semi-transparent or greyscale to being properly colourised as it enters the page, for example, or have it drift in from the side using a CSS animation.</p>
+<p>These sorts of CSS animations are reversible, so if the user scrolls back up, the class is removed and the animation reverses.</p>
+<section id="demo-highlight-photo-as-we-scroll" class="level2">
+<h2 class="anchored" data-anchor-id="demo-highlight-photo-as-we-scroll">Demo: highlight photo as we scroll</h2>
+<style>
+  @keyframes entering {
+    from {
+      opacity: 0.1;
+      transform: rotate(0);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(15deg);
+    }
+  }
+
+  @keyframes leaving {
+    from {
+      opacity: 1;
+      transform: rotate(15deg);
+    }
+    to {
+      opacity: 0.3;
+      transform: rotate(0deg);
+    }
+  }
+
+  .myphoto {
+    opacity: 0.1;
+    box-shadow: 0px 20px 80px rgb(0, 0, 0, 15%);
+  }
+
+  .myphoto.entering {
+    animation: entering 1s ease-out;
+  }
+
+  .myphoto.leaving {
+    animation: leaving 1s ease-out;
+  }
+</style>
+<p>Then add the HTML attributes to the content (in this case, a photo):</p>
+<p>Let’s start by tagging some content. In Quarto, we can create blocks with attributes using <code>::: {attribute="value"}</code>, so let’s create one with <code>data-scroll-int="entering"</code> and <code>data-scroll-int="leaving"</code>.</p>
+<p><img src="https://unsplash.com/photos/9A-Z4nHrIZk/download?ixid=MnwxMjA3fDB8MXxhbGx8MTB8fHx8fHwyfHwxNjUzNTQ4NDA5&amp;force=true&amp;w=640.png" class="myphoto img-fluid" data-scroll-int="entering" width="250"></p>
+<p><em>(This floral photo is by <a href="https://unsplash.com/photos/9A-Z4nHrIZk">Skyler Ewing</a> on Unsplash!)</em></p>
+<div class="callout-warning callout callout-style-default callout-captioned">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-caption-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This isn’t working yet!</p>
+</div>
+</div>
+<p>kl; f d gdfg gg</p>
+<p>fdg</p>
+<p>fdg njkfdhjkfd gf</p>
+<p>d</p>
+<p>gvnjkdf njgkfdnkglfds ’</p>
+<p>fjgkj gkd fj klgjfd’</p>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script type="ojs-module-contents">
+{"contents":[{"methodName":"interpret","cellName":"ojs-cell-1","inline":false,"source":"scrollama = require(\"scrollama@3.1.1\")\n"}]}
+</script>
+<script type="module">
+window._ojs.paths.runtimeToDoc = "../../scrollytelling";
+window._ojs.paths.runtimeToRoot = "../..";
+window._ojs.paths.docToRoot = "..";
+window._ojs.selfContained = false;
+window._ojs.runtime.interpretFromScriptTags();
+</script>
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    setTimeout(function() {
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      let href = ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const cites = ref.parentNode.getAttribute('data-cites').split(' ');
+    tippyHover(ref, function() {
+      var popup = window.document.createElement('div');
+      cites.forEach(function(cite) {
+        var citeDiv = window.document.createElement('div');
+        citeDiv.classList.add('hanging-indent');
+        citeDiv.classList.add('csl-entry');
+        var biblioDiv = window.document.getElementById('ref-' + cite);
+        if (biblioDiv) {
+          citeDiv.innerHTML = biblioDiv.innerHTML;
+        }
+        popup.appendChild(citeDiv);
+      });
+      return popup.innerHTML;
+    });
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

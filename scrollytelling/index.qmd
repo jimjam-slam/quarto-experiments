@@ -1,0 +1,173 @@
+---
+title: "(WIP) Scrollytelling demo"
+subtitle: "(Partially) driven by scrollama.js"
+author: "James Goldie"
+---
+
+Fancy JS libraries like [`scrollama.js`](https://github.com/russellgoldenberg/scrollama) help you track which elements are visible based on scroll so that you can do things to update them.
+
+But the basics of getting elements to stick are just done with one bit of CSS: using `position: sticky` and then using `top`/`left`/`right`/`bottom` to define the point (for its parent block) at which the content "sticks".
+
+Let's see how that works with some standard Quarto `.columns`. (I've made also made the columns a bit wider with `.column-body-outset`, 'cause it looks classy.)
+
+::::: {.columns .column-body-outset}
+
+## Demo: A sticky but static right column
+
+:::: {.column width="35%"}
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.
+
+Suspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.
+
+Cras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.
+::::
+
+:::: {.column width="10%"}
+::::
+
+:::: {.column width="55%" style="padding:20px; position:sticky;top:100px;background-color:goldenrod"}
+
+This whole column has `position:sticky;` and `top:100px` on it!
+
+::: {style="background-color: #333; color: white; height: 200px; text-align: center; padding: 20px;"}
+(You could have a figure here... or some bullet points... anything that you think is relevant to an extended section of your report, really!)
+:::
+::::
+
+:::::
+
+# A less sticky interlude
+
+How did that go?
+
+Did we like it?
+
+Can we continue to scroll now that the previous section is gone?
+
+Yeah, it looks like it works!
+
+# Sticky overlays
+
+The other common style is to have some full-width content stick but only cover part of the page.
+
+For this, we'll need a parent to be the start/end of the sticky zone (equivalent to our `.columns` before).
+
+We'll also need a container for our hero image that has:
+
+* `position:sticky`
+* `top: 0` will make it stick once the top of the section hits the top of the screen (so you won't see content sneaking past up the top)
+* `background-image: url(...)` loads the image into it, and
+* `background-size: cover` appropriately sizes it for all screens
+* `height: 60vh` sizes it to 60% of the screen height, leaving 40% for the text underneath.
+  - (You could set it to `100vh` if you just wanted the content to be the whole jam, but since our sticky content isn't _doing_ anything yet, I think that's a bad idea. You typically want people to see _something_ happening when they scroll!)
+* I've also given it Quarto's `.column-screen` class to make it stretch across the screen.
+
+Let's see how it looks!
+
+## Demo: sticky overlay
+
+::::
+
+::: {.column-screen style="background-image:url(https://unsplash.com/photos/KPaSCpklCZw/download?ixid=MnwxMjA3fDB8MXxzZWFyY2h8NHx8bGlnaHRob3VzZXxlbnwwfHx8fDE2NTM0OTMzOTE&force=true); background-size: cover; height: 60vh; position: sticky; top: 0; "}
+:::
+
+:::
+<!-- we don't really need to put this stuff in a separate div, but you might choose to to make the styling more cosnsistent with the above style -->
+_(This lighthouse photo is by [Everaldo Coelho](https://unsplash.com/photos/KPaSCpklCZw) on Unsplash!)_
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.
+
+Suspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.
+
+Cras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.
+:::
+::::
+
+# Review
+
+This works great!
+
+Since this is all just CSS and both styles are structured very similarly, you could choose to have _both_ options depending on screen size (so overlay at mobile widths and columns at desktop sizes).
+
+But so far, nothing's _moving_ or _changing_. We'll need some JavaScript for that.
+
+# Using `scrollama.js`
+
+Firstly, we'll need to import the library. In Quarto, we can do that with:
+
+```{ojs}
+scrollama = require("scrollama@3.1.1")
+```
+
+The idea with Scrollama is that it [keeps an eye on our scrolling](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) and attaches or removes CSS classes from elements that we've tagged using HTML sttributes based on their visibility.
+
+This can achieve a variety of effects---not just the sticky effects we've used above! As well as using sticky patterns, it can draw attention to elements as they scroll in. You could have an image go from being semi-transparent or greyscale to being properly colourised as it enters the page, for example, or have it drift in from the side using a CSS animation.
+
+These sorts of CSS animations are reversible, so if the user scrolls back up, the class is removed and the animation reverses.
+
+## Demo: highlight photo as we scroll
+
+
+
+<style>
+  @keyframes entering {
+    from {
+      opacity: 0.1;
+      transform: rotate(0);
+    }
+    to {
+      opacity: 1;
+      transform: rotate(15deg);
+    }
+  }
+
+  @keyframes leaving {
+    from {
+      opacity: 1;
+      transform: rotate(15deg);
+    }
+    to {
+      opacity: 0.3;
+      transform: rotate(0deg);
+    }
+  }
+
+  .myphoto {
+    opacity: 0.1;
+    box-shadow: 0px 20px 80px rgb(0, 0, 0, 15%);
+  }
+
+  .myphoto.entering {
+    animation: entering 1s ease-out;
+  }
+
+  .myphoto.leaving {
+    animation: leaving 1s ease-out;
+  }
+</style>
+
+Then add the HTML attributes to the content (in this case, a photo):
+
+Let's start by tagging some content. In Quarto, we can create blocks with attributes using `::: {attribute="value"}`, so let's create one with `data-scroll-int="entering"` and `data-scroll-int="leaving"`.
+
+![](https://unsplash.com/photos/9A-Z4nHrIZk/download?ixid=MnwxMjA3fDB8MXxhbGx8MTB8fHx8fHwyfHwxNjUzNTQ4NDA5&force=true&w=640){data-scroll-int="entering" data-scroll-int="leaving" class="myphoto" width="250px"}
+
+_(This floral photo is by [Skyler Ewing](https://unsplash.com/photos/9A-Z4nHrIZk) on Unsplash!)_
+
+
+::: {.callout-warning}
+This isn't working yet!
+:::
+
+kl; f d gdfg  gg 
+
+fdg
+
+ fdg njkfdhjkfd gf
+
+d
+
+gvnjkdf njgkfdnkglfds '
+
+
+fjgkj gkd fj klgjfd'
