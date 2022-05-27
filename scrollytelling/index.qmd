@@ -2,6 +2,9 @@
 title: "(WIP) Scrollytelling demo"
 subtitle: "(Partially) driven by scrollama.js"
 author: "James Goldie"
+format:
+  html:
+    toc: true
 ---
 
 Fancy JS libraries like [`scrollama.js`](https://github.com/russellgoldenberg/scrollama) help you track which elements are visible based on scroll so that you can do things to update them.
@@ -50,7 +53,7 @@ Yeah, it looks like it works!
 
 The other common style is to have some full-width content stick but only cover part of the page.
 
-For this, we'll need a parent to be the start/end of the sticky zone (equivalent to our `.columns` before).
+For this, we'll need a parent to be the start/end of the sticky zone (equivalent to our `.columns` before). In this case, because I've created a heading in the next section, Quarto automatically puts it and the content below it in a `<section>`, so there's no need to add another wrapper.
 
 We'll also need a container for our hero image that has:
 
@@ -66,13 +69,9 @@ Let's see how it looks!
 
 ## Demo: sticky overlay
 
-::::
-
 ::: {.column-screen style="background-image:url(https://unsplash.com/photos/KPaSCpklCZw/download?ixid=MnwxMjA3fDB8MXxzZWFyY2h8NHx8bGlnaHRob3VzZXxlbnwwfHx8fDE2NTM0OTMzOTE&force=true); background-size: cover; height: 60vh; position: sticky; top: 0; "}
 :::
 
-:::
-<!-- we don't really need to put this stuff in a separate div, but you might choose to to make the styling more cosnsistent with the above style -->
 _(This lighthouse photo is by [Everaldo Coelho](https://unsplash.com/photos/KPaSCpklCZw) on Unsplash!)_
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.
@@ -80,10 +79,8 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus tur
 Suspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.
 
 Cras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.
-:::
-::::
 
-# Review
+## Review
 
 This works great!
 
@@ -93,81 +90,85 @@ But so far, nothing's _moving_ or _changing_. We'll need some JavaScript for tha
 
 # Using `scrollama.js`
 
-Firstly, we'll need to import the library. In Quarto, we can do that with:
+The idea with Scrollama is that it [keeps an eye on our scrolling](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) tells us when targeted objects are visible.
+
+This can achieve a variety of effects---not just the sticky effects we've used above! As well as using sticky patterns, it can draw attention to elements as they scroll in.
+
+This isn't an entirely JS-free endeavour, unfortunately. Once we've imported the library, we still need to:
+
+1. Use a `setup` function to tell scrollama which elements to target (let's say, anything with the `.step` class)
+2. Give it event handlers: functions that will run when something enters or exits. To start, let's keep it simple and have it apply or remove a CSS class, `.is-active`.
+
+## Demo: A flashy series of boxes
 
 ```{ojs}
+//| output: false
+
+// import and instantiate the scrollama
 scrollama = require("scrollama@3.1.1")
+scroller = scrollama();
+
+// setup the instance, pass callback functions
+scroller
+  .setup({
+    step: ".step",
+  })
+  .onStepEnter((response) => {
+    console.log("Enter triggered")
+    console.log(response)
+    // { element, index, direction }
+    response.element.classList.add("is-active");
+
+  })
+  .onStepExit((response) => {
+    console.log("Exit triggered")
+    console.log(response)
+    // { element, index, direction }
+    response.element.classList.remove("is-active");
+  });
 ```
 
-The idea with Scrollama is that it [keeps an eye on our scrolling](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) and attaches or removes CSS classes from elements that we've tagged using HTML sttributes based on their visibility.
-
-This can achieve a variety of effects---not just the sticky effects we've used above! As well as using sticky patterns, it can draw attention to elements as they scroll in. You could have an image go from being semi-transparent or greyscale to being properly colourised as it enters the page, for example, or have it drift in from the side using a CSS animation.
-
-These sorts of CSS animations are reversible, so if the user scrolls back up, the class is removed and the animation reverses.
-
-## Demo: highlight photo as we scroll
-
-
-
 <style>
-  @keyframes entering {
-    from {
-      opacity: 0.1;
-      transform: rotate(0);
-    }
-    to {
-      opacity: 1;
-      transform: rotate(15deg);
-    }
-  }
+#columnscroller .step {
+  background-color: #ccc;
+  color: black;
+  height: 200px;
+  text-align: center;
+  padding: 20px;
+  transition: background-color 0.5s, color 0.5s, transform 0.5s;
+}
 
-  @keyframes leaving {
-    from {
-      opacity: 1;
-      transform: rotate(15deg);
-    }
-    to {
-      opacity: 0.3;
-      transform: rotate(0deg);
-    }
-  }
-
-  .myphoto {
-    opacity: 0.1;
-    box-shadow: 0px 20px 80px rgb(0, 0, 0, 15%);
-  }
-
-  .myphoto.entering {
-    animation: entering 1s ease-out;
-  }
-
-  .myphoto.leaving {
-    animation: leaving 1s ease-out;
-  }
+/* here's how each box will look as we scroll past it */
+#columnscroller .step.is-active {
+  background-color: #5500cc;
+  color: white;
+  transform: rotate(1.25deg) scale(1.05);
+}
 </style>
 
-Then add the HTML attributes to the content (in this case, a photo):
 
-Let's start by tagging some content. In Quarto, we can create blocks with attributes using `::: {attribute="value"}`, so let's create one with `data-scroll-int="entering"` and `data-scroll-int="leaving"`.
+:::: {#columnscroller}
 
-![](https://unsplash.com/photos/9A-Z4nHrIZk/download?ixid=MnwxMjA3fDB8MXxhbGx8MTB8fHx8fHwyfHwxNjUzNTQ4NDA5&force=true&w=640){data-scroll-int="entering" data-scroll-int="leaving" class="myphoto" width="250px"}
-
-_(This floral photo is by [Skyler Ewing](https://unsplash.com/photos/9A-Z4nHrIZk) on Unsplash!)_
-
-
-::: {.callout-warning}
-This isn't working yet!
+::: {.step style="margin-bottom: 100px;"}
+Here's our first box!
 :::
 
-kl; f d gdfg  gg 
+::: {.step style="margin-bottom: 100px;"}
+And our second box!
+:::
 
-fdg
+::: {.step}
+And a third, I guess.
+:::
 
- fdg njkfdhjkfd gf
+::::
 
-d
+## Review
 
-gvnjkdf njgkfdnkglfds '
+This works nicely!
 
+Looking at the `console.log` statements, we can see our event handlers get an object that includes not just the element being targeted, but also its index (is this its DOM order compared to similarly targeted things?) and the direction (`"up"` or `"down"`) by which it's exiting.
 
-fjgkj gkd fj klgjfd'
+You could theoretically use these event handlers, `onStepEnter` and `onStepExit`, to do anything. You could have the boxes being detected be invisible, for example, and just use them as trigger points - the actual thing being modified could be sticky and sitting at the top.
+
+Let's see how well that works with our two-column example from before.

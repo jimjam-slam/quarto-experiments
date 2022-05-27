@@ -1,5 +1,47 @@
 [
   {
+    "objectID": "scrollytelling/index.html",
+    "href": "scrollytelling/index.html",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "",
+    "text": "Fancy JS libraries like scrollama.js help you track which elements are visible based on scroll so that you can do things to update them.\nBut the basics of getting elements to stick are just done with one bit of CSS: using position: sticky and then using top/left/right/bottom to define the point (for its parent block) at which the content “sticks”.\nLet’s see how that works with some standard Quarto .columns. (I’ve made also made the columns a bit wider with .column-body-outset, ’cause it looks classy.)"
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
+    "href": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: A sticky but static right column",
+    "text": "Demo: A sticky but static right column\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; and top:100px on it!\n\n(You could have a figure here… or some bullet points… anything that you think is relevant to an extended section of your report, really!)"
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-sticky-overlay",
+    "href": "scrollytelling/index.html#demo-sticky-overlay",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: sticky overlay",
+    "text": "Demo: sticky overlay\n\n\n\n(This lighthouse photo is by Everaldo Coelho on Unsplash!)\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta."
+  },
+  {
+    "objectID": "scrollytelling/index.html#review",
+    "href": "scrollytelling/index.html#review",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Review",
+    "text": "Review\nThis works great!\nSince this is all just CSS and both styles are structured very similarly, you could choose to have both options depending on screen size (so overlay at mobile widths and columns at desktop sizes).\nBut so far, nothing’s moving or changing. We’ll need some JavaScript for that."
+  },
+  {
+    "objectID": "scrollytelling/index.html#demo-a-flashy-series-of-boxes",
+    "href": "scrollytelling/index.html#demo-a-flashy-series-of-boxes",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Demo: A flashy series of boxes",
+    "text": "Demo: A flashy series of boxes\n\nscrollama = require(\"scrollama@3.1.1\")\nscroller = scrollama();\n\n// setup the instance, pass callback functions\nscroller\n  .setup({\n    step: \".step\",\n  })\n  .onStepEnter((response) => {\n    console.log(\"Enter triggered\")\n    console.log(response)\n    // { element, index, direction }\n    response.element.classList.add(\"is-active\");\n\n  })\n  .onStepExit((response) => {\n    console.log(\"Exit triggered\")\n    console.log(response)\n    // { element, index, direction }\n    response.element.classList.remove(\"is-active\");\n  });\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHere’s our first box!\n\n\nAnd our second box!\n\n\nAnd a third, I guess."
+  },
+  {
+    "objectID": "scrollytelling/index.html#review-1",
+    "href": "scrollytelling/index.html#review-1",
+    "title": "(WIP) Scrollytelling demo",
+    "section": "Review",
+    "text": "Review\nThis works nicely!\nLooking at the console.log statements, we can see our event handlers get an object that includes not just the element being targeted, but also its index (is this its DOM order compared to similarly targeted things?) and the direction (\"up\" or \"down\") by which it’s exiting.\nYou could theoretically use these event handlers, onStepEnter and onStepExit, to do anything. You could have the boxes being detected be invisible, for example, and just use them as trigger points - the actual thing being modified could be sticky and sitting at the top.\nLet’s see how well that works with our two-column example from before."
+  },
+  {
     "objectID": "juxtapose/index.html",
     "href": "juxtapose/index.html",
     "title": "Before-and-after image demo",
@@ -40,40 +82,5 @@
     "title": "Chart with popup dialog",
     "section": "Look at this cool chart!",
     "text": "Look at this cool chart!"
-  },
-  {
-    "objectID": "scrollytelling/index.html",
-    "href": "scrollytelling/index.html",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "",
-    "text": "Fancy JS libraries like scrollama.js help you track which elements are visible based on scroll so that you can do things to update them.\nBut the basics of getting elements to stick are just done with one bit of CSS: using position: sticky and then using top/left/right/bottom to define the point (for its parent block) at which the content “sticks”.\nLet’s see how that works with some standard Quarto .columns. (I’ve made also made the columns a bit wider with .column-body-outset, ’cause it looks classy.)"
-  },
-  {
-    "objectID": "scrollytelling/index.html#two-columns-one-sticky",
-    "href": "scrollytelling/index.html#two-columns-one-sticky",
-    "title": "Scrollytelling demo",
-    "section": "Two columns, one sticky",
-    "text": "Two columns, one sticky\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; top:10px on it!\n\n(figure here)"
-  },
-  {
-    "objectID": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
-    "href": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "Demo: A sticky but static right column",
-    "text": "Demo: A sticky but static right column\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; and top:100px on it!\n\n(You could have a figure here… or some bullet points… anything that you think is relevant to an extended section of your report, really!)"
-  },
-  {
-    "objectID": "scrollytelling/index.html#demo-sticky-overlay",
-    "href": "scrollytelling/index.html#demo-sticky-overlay",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "Demo: sticky overlay",
-    "text": "Demo: sticky overlay\n::::\n\n\n\n:::  (This lighthouse photo is by Everaldo Coelho on Unsplash!)\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta. ::: ::::"
-  },
-  {
-    "objectID": "scrollytelling/index.html#demo-highlight-photo-as-we-scroll",
-    "href": "scrollytelling/index.html#demo-highlight-photo-as-we-scroll",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "Demo: highlight photo as we scroll",
-    "text": "Demo: highlight photo as we scroll\n\nThen add the HTML attributes to the content (in this case, a photo):\nLet’s start by tagging some content. In Quarto, we can create blocks with attributes using ::: {attribute=\"value\"}, so let’s create one with data-scroll-int=\"entering\" and data-scroll-int=\"leaving\".\n\n(This floral photo is by Skyler Ewing on Unsplash!)\n\n\n\n\n\n\nWarning\n\n\n\nThis isn’t working yet!\n\n\nkl; f d gdfg gg\nfdg\nfdg njkfdhjkfd gf\nd\ngvnjkdf njgkfdnkglfds ’\nfjgkj gkd fj klgjfd’"
   }
 ]
