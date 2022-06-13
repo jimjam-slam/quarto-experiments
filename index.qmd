@@ -7,3 +7,4 @@ Experiments include:
 
 * [`modal-dialog`](./modal-dialog): add a popup to your report/blog post/slides
 * [`juxtapose`](./juxtapose): before-and-after images with a slider
+* [`vertical-slides`](./vertical-slides): a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to look like you're sinking down into the sea

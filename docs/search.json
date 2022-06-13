@@ -67,7 +67,28 @@
     "href": "index.html",
     "title": "Quarto experiments",
     "section": "",
-    "text": "modal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider"
+    "text": "modal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider\nvertical-slides: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to look like you’re sinking down into the sea"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section",
+    "href": "vertical-slides/index.html#section",
+    "title": "",
+    "section": "",
+    "text": "My content is here!"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-1",
+    "href": "vertical-slides/index.html#section-1",
+    "title": "",
+    "section": "",
+    "text": "My content is there (but it’s white now to make things easier to track!)"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-2",
+    "href": "vertical-slides/index.html#section-2",
+    "title": "",
+    "section": "",
+    "text": "Now it’s different content entirely:\n\n\nApples\nBananas\nOranges"
   },
   {
     "objectID": "modal-dialog/index.html",
@@ -82,89 +103,5 @@
     "title": "Chart with popup dialog",
     "section": "Look at this cool chart!",
     "text": "Look at this cool chart!"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section",
-    "href": "vertical-slides/index.html#section",
-    "title": "",
-    "section": "",
-    "text": "My content is here!"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section-2",
-    "href": "vertical-slides/index.html#section-2",
-    "title": "",
-    "section": "",
-    "text": "Now it’s different content entirely:\n\n\nApples\nBananas\nOranges"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section-4",
-    "href": "vertical-slides/index.html#section-4",
-    "title": "",
-    "section": "3.1",
-    "text": "3.1"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section-5",
-    "href": "vertical-slides/index.html#section-5",
-    "title": "",
-    "section": "3.2",
-    "text": "3.2"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section-1",
-    "href": "vertical-slides/index.html#section-1",
-    "title": "",
-    "section": "",
-    "text": "My content is there (but it’s white now to make things easier to track!)"
-  },
-  {
-    "objectID": "vertical-slides/index.html#section-3",
-    "href": "vertical-slides/index.html#section-3",
-    "title": "",
-    "section": "3",
-    "text": "3"
-  },
-  {
-    "objectID": "vertical-slides/index.html#a",
-    "href": "vertical-slides/index.html#a",
-    "title": "",
-    "section": "A",
-    "text": "A\n\n\n\n\nMy content is here!"
-  },
-  {
-    "objectID": "vertical-slides/index.html#b",
-    "href": "vertical-slides/index.html#b",
-    "title": "",
-    "section": "B",
-    "text": "B\n\n\n\n\nMy content is there"
-  },
-  {
-    "objectID": "vertical-slides/index.html#c",
-    "href": "vertical-slides/index.html#c",
-    "title": "",
-    "section": "C",
-    "text": "C\n\n\n\n\nNow it’s different content entirely:\n\n\nApples\nBananas\nOranges"
-  },
-  {
-    "objectID": "vertical-slides/index.html#d",
-    "href": "vertical-slides/index.html#d",
-    "title": "",
-    "section": "D",
-    "text": "D"
-  },
-  {
-    "objectID": "vertical-slides/index.html#e",
-    "href": "vertical-slides/index.html#e",
-    "title": "",
-    "section": "E",
-    "text": "E"
-  },
-  {
-    "objectID": "vertical-slides/index.html#f",
-    "href": "vertical-slides/index.html#f",
-    "title": "",
-    "section": "F",
-    "text": "F"
   }
 ]
