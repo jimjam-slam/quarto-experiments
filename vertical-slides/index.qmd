@@ -1,0 +1,64 @@
+---
+format:
+  revealjs:
+    controls: true
+    transition: slide
+    theme: [default, style.scss]
+    parallax-background-image: narrow.png
+    parallax-background-size: "28px 6000px"
+---
+
+# Sinking Slides {style="text-align:right;"}
+
+<h2>By James<h2>
+
+## {.center}
+:::: {.columns}
+
+::: {.column width="50%"}
+:::
+
+::: {.column width="50%"}
+My content is here!
+:::
+
+::::
+
+## {.center }
+
+:::: {.columns}
+
+::: {.column width="50%"}
+:::
+
+::: {.column width="50%"}
+My content is **there** (but it's white now to make things easier to track!)
+:::
+
+::::
+
+## {.center}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+:::
+
+::: {.column width="50%"}
+Now it's different content entirely:
+
+::: {.incremental}
+* Apples
+* Bananas
+* Oranges
+:::
+
+:::
+
+::::
+
+## {.center}
+
+## {.center}
+
+## {.center}

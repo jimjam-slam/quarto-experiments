@@ -1,0 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;800&display=swap');
+
+/*-- scss:defaults --*/
+
+$body-bg: navy;
+$body-color: white;
+$link-color: gold;
+
+$font-family-sans-serif: Inter, Helvetica, sans-serif;
+
+/*-- scss:rules --*/
+
+// push the controls over the right column
+@media screen and (min-width: 500px) {
+  .reveal .controls[data-controls-layout=edges] .navigate-down {
+    left: 67%;
+    bottom: 2.3em;
+  }
+  .reveal .controls[data-controls-layout=edges] .navigate-up {
+    left: 67%;
+    top: 2.3em;
+  }
+}
