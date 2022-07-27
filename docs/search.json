@@ -53,7 +53,7 @@
     "href": "index.html",
     "title": "Quarto experiments",
     "section": "",
-    "text": "Experiments include:\n\nmodal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider\nvertical-slides: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to make it look like you’re sinking down into the sea\nscrollytelling: (WIP) some scrollytelling (and scrollytelling-adjacent) techniques for your Quarto documents, from easier to harder"
+    "text": "Experiments include:\n\nmodal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider\nvertical-slides: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to make it look like you’re sinking down into the sea\nscrollytelling: (WIP) some scrollytelling (and scrollytelling-adjacent) techniques for your Quarto documents, from easier to harder\n\nEach of the experiments has a code button, but you can also check out the repo itself on GitHub."
   },
   {
     "objectID": "vertical-slides/index.html#section",
