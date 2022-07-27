@@ -4,14 +4,7 @@
     "href": "scrollytelling/index.html",
     "title": "(WIP) Scrollytelling demo",
     "section": "",
-    "text": "Fancy JS libraries like scrollama.js help you track which elements are visible based on scroll so that you can do things to update them.\nBut the basics of getting elements to stick are just done with one bit of CSS: using position: sticky and then using top/left/right/bottom to define the point (for its parent block) at which the content “sticks”.\nLet’s see how that works with some standard Quarto .columns. (I’ve made also made the columns a bit wider with .column-body-outset, ’cause it looks classy.)"
-  },
-  {
-    "objectID": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
-    "href": "scrollytelling/index.html#demo-a-sticky-but-static-right-column",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "Demo: A sticky but static right column",
-    "text": "Demo: A sticky but static right column\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.\nSuspendisse at diam a purus dictum bibendum. Sed eu volutpat sem. Interdum et malesuada fames ac ante ipsum primis in faucibus. Pellentesque at porttitor leo. Mauris laoreet nibh arcu, hendrerit posuere quam auctor eget. Quisque vulputate felis et bibendum dapibus. Ut varius in risus nec finibus. Sed vitae nisl in nisl gravida consectetur. Maecenas ac libero non arcu ultricies porta non sit amet lorem.\nCras ac euismod quam. Proin tempor hendrerit ullamcorper. Aliquam eu elementum neque. Nunc purus dui, fringilla quis pretium vitae, accumsan eget massa. Pellentesque dignissim justo nec velit ullamcorper accumsan. Proin ultrices nisi ac convallis varius. Morbi at leo nisl. Nam condimentum quis mi sed ultricies. Sed vel diam dictum, scelerisque enim sit amet, feugiat nibh. Interdum et malesuada fames ac ante ipsum primis in faucibus. Aenean at tortor vel ipsum suscipit porta.\n\n\n\n\n\nThis whole column has position:sticky; and top:100px on it!\n\n(You could have a figure here… or some bullet points… anything that you think is relevant to an extended section of your report, really!)"
+    "text": "Note\n\n\n\nThis is still a work in progress! I’m hoping to continue exploring more complex scrollytelling techniques.\nFancy JS libraries like scrollama.js help you track which elements are visible based on scroll so that you can do things to update them.\nBut the basics of getting elements to stick are just done with one bit of CSS: using position: sticky and then using top/left/right/bottom to define the point (for its parent block) at which the content “sticks”.\nLet’s see how that works with some standard Quarto .columns. (I’ve made also made the columns a bit wider with .column-body-outset, ’cause it looks classy.)"
   },
   {
     "objectID": "scrollytelling/index.html#demo-sticky-overlay",
@@ -28,18 +21,11 @@
     "text": "Review\nThis works great!\nSince this is all just CSS and both styles are structured very similarly, you could choose to have both options depending on screen size (so overlay at mobile widths and columns at desktop sizes).\nBut so far, nothing’s moving or changing. We’ll need some JavaScript for that."
   },
   {
-    "objectID": "scrollytelling/index.html#demo-a-flashy-series-of-boxes",
-    "href": "scrollytelling/index.html#demo-a-flashy-series-of-boxes",
-    "title": "(WIP) Scrollytelling demo",
-    "section": "Demo: A flashy series of boxes",
-    "text": "Demo: A flashy series of boxes\n\nscrollama = require(\"scrollama@3.1.1\")\nscroller = scrollama();\n\n// setup the instance, pass callback functions\nscroller\n  .setup({\n    step: \".step\",\n  })\n  .onStepEnter((response) => {\n    console.log(\"Enter triggered\")\n    console.log(response)\n    // { element, index, direction }\n    response.element.classList.add(\"is-active\");\n\n  })\n  .onStepExit((response) => {\n    console.log(\"Exit triggered\")\n    console.log(response)\n    // { element, index, direction }\n    response.element.classList.remove(\"is-active\");\n  });\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nHere’s our first box!\n\n\nAnd our second box!\n\n\nAnd a third, I guess."
-  },
-  {
     "objectID": "scrollytelling/index.html#review-1",
     "href": "scrollytelling/index.html#review-1",
     "title": "(WIP) Scrollytelling demo",
     "section": "Review",
-    "text": "Review\nThis works nicely!\nLooking at the console.log statements, we can see our event handlers get an object that includes not just the element being targeted, but also its index (is this its DOM order compared to similarly targeted things?) and the direction (\"up\" or \"down\") by which it’s exiting.\nYou could theoretically use these event handlers, onStepEnter and onStepExit, to do anything. You could have the boxes being detected be invisible, for example, and just use them as trigger points - the actual thing being modified could be sticky and sitting at the top.\nLet’s see how well that works with our two-column example from before."
+    "text": "Review\nThis works nicely!\nIf you open your browser’s developer tools (Cmd+Opt+I on a Mac or Ctrl+Alt+I on Windows) and go to the Console pane, you can see it log the responseobject every time one of our event handlers fires (because an element scrolls into or out of view). Those are the console.log functions above.\nThe response object that we’re printing shows all the information we get when these event handlers fire.That includes not just the element being targeted, but also its index (TODO - is this its DOM order compared to similarly targeted things?) and the direction (\"up\" or \"down\") by which it’s exiting.\nYou could theoretically use these event handlers, onStepEnter and onStepExit, to do anything. You could have the boxes being detected be invisible, for example, and just use them as trigger points - the actual thing being modified could be sticky and sitting at the top.\nTODO - Let’s see how well that works with our two-column example from before."
   },
   {
     "objectID": "juxtapose/index.html",
@@ -67,7 +53,7 @@
     "href": "index.html",
     "title": "Quarto experiments",
     "section": "",
-    "text": "modal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider\nvertical-slides: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to look like you’re sinking down into the sea"
+    "text": "Experiments include:\n\nmodal-dialog: add a popup to your report/blog post/slides\njuxtapose: before-and-after images with a slider\nvertical-slides: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to make it look like you’re sinking down into the sea\nscrollytelling: (WIP) some scrollytelling (and scrollytelling-adjacent) techniques for your Quarto documents, from easier to harder"
   },
   {
     "objectID": "vertical-slides/index.html#section",
@@ -89,6 +75,41 @@
     "title": "",
     "section": "",
     "text": "Now it’s different content entirely:\n\n\nApples\nBananas\nOranges"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-3",
+    "href": "vertical-slides/index.html#section-3",
+    "title": "",
+    "section": "",
+    "text": "myplot <- ggplot(diamonds) +\n  aes(price, carat) +\n  geom_point() +\n  theme_minimal(base_size = 24) +\n  theme(\n    text =\n      element_text(colour = \"white\"),\n    axis.text = \n      element_text(colour = \"white\"),\n    plot.background =\n      element_rect(fill = NA, colour = NA),\n    panel.background =\n      element_rect(fill = NA, colour = NA),\n    panel.grid =\n      element_line(colour = alpha(\"white\", 0.25))\n  )\n\n\nLet’s get more sophisticated with some evolving content. First, a ggplot2 graphic."
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-4",
+    "href": "vertical-slides/index.html#section-4",
+    "title": "",
+    "section": "",
+    "text": "Here it is on its own…"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-5",
+    "href": "vertical-slides/index.html#section-5",
+    "title": "",
+    "section": "",
+    "text": "But now we can add another aesthetic!\n(It could use a legend, though…)"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-6",
+    "href": "vertical-slides/index.html#section-6",
+    "title": "",
+    "section": "",
+    "text": "mydata = [\n  {\n    name: \"Azlan\",\n    team: \"Banana\",\n    value: 40\n  },\n  {\n    name: \"Vader\",\n    team: \"Apple\",\n    value: 75\n  },\n  {\n    name: \"Mickey\",\n    team: \"Orange\",\n    value: 15\n  },\n  {\n    name: \"Donald\",\n    team: \"Grape\",\n    value: 20\n  },\n  {\n    name: \"Pluto\",\n    team: \"Orange\",\n    value: 35\n  }\n]\n\n\n\n\n\n\n\nOkay, that’s not super exciting. Let’s try something with D3.\nOne option is the revealVizScrollyteling plugin…\n… but I’d really like to just let Revealjs’s auto-animate take care of it and not write animations in a super imperative way.\nLet’s see if attaching data-id attributes to our D3 elements is enough!"
+  },
+  {
+    "objectID": "vertical-slides/index.html#section-7",
+    "href": "vertical-slides/index.html#section-7",
+    "title": "",
+    "section": "",
+    "text": "// {\n//   const svg =\n//     d3.create(\"svg\")\n//       .attr(\"width\",  \"300px\")\n//       .attr(\"height\", \"500px\")\n//       .attr(\"viewBox\", [0, 0, 300, 500])\n//       .attr(\"style\",\n//         \"max-width: 100%; height: auto; height: intrinsic;\");\n\n//   // X axis\n//   var x = d3.scaleBand()  \n//     .range([ 0, width ])\n//     .domain(data.map(function(d) { return d.Country; }))\n//     .padding(0.2);\n//   svg.append(\"g\")\n//     .attr(\"transform\", \"translate(0,\" + height + \")\")\n//     .call(d3.axisBottom(x))\n//     .selectAll(\"text\")\n//       .attr(\"transform\", \"translate(-10,0)rotate(-45)\")\n//       .style(\"text-anchor\", \"end\");\n// }\n\nPlot.plot({\n  marks: [\n    Plot.barY(mydata,\n      {\n        x: \"team\",\n        y: \"value\",\n        name: \"name\"\n      })\n  ],\n  style: {\n    color: \"white\",\n    backgroundColor: \"transparent\"\n  }\n})\n\n\n\n\n\n\n\nHere’re some bars."
   },
   {
     "objectID": "modal-dialog/index.html",

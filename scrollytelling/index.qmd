@@ -5,7 +5,12 @@ author: "James Goldie"
 format:
   html:
     toc: true
+    code-tools: true
 ---
+
+::: {.callout-note}
+This is still a work in progress! I'm hoping to continue exploring more complex scrollytelling techniques.
+:::
 
 Fancy JS libraries like [`scrollama.js`](https://github.com/russellgoldenberg/scrollama) help you track which elements are visible based on scroll so that you can do things to update them.
 
@@ -13,9 +18,9 @@ But the basics of getting elements to stick are just done with one bit of CSS: u
 
 Let's see how that works with some standard Quarto `.columns`. (I've made also made the columns a bit wider with `.column-body-outset`, 'cause it looks classy.)
 
-::::: {.columns .column-body-outset}
+# Demo: A sticky but unchanging right column
 
-## Demo: A sticky but static right column
+::::: {.columns .column-body-outset}
 
 :::: {.column width="35%"}
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut accumsan rhoncus turpis, id condimentum augue dignissim vel. Suspendisse varius ex nec ligula dictum, vel vestibulum felis bibendum. Cras id mauris posuere, tempus quam at, vehicula eros. Mauris lobortis ante at dapibus blandit. Praesent hendrerit purus quis urna auctor congue. Etiam ut purus mattis, fringilla magna ac, rhoncus enim. Maecenas luctus turpis nisl, sit amet efficitur mauris viverra vel. In dignissim vehicula nunc, vel scelerisque ante. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nulla ac pulvinar justo. Sed quis felis odio. Aliquam erat volutpat. Duis ornare ligula tincidunt, volutpat erat in, tristique enim. Nullam id neque sed odio consectetur imperdiet. Cras non malesuada enim, eget hendrerit nunc.
@@ -38,16 +43,6 @@ This whole column has `position:sticky;` and `top:100px` on it!
 ::::
 
 :::::
-
-# A less sticky interlude
-
-How did that go?
-
-Did we like it?
-
-Can we continue to scroll now that the previous section is gone?
-
-Yeah, it looks like it works!
 
 # Sticky overlays
 
@@ -97,9 +92,11 @@ This can achieve a variety of effects---not just the sticky effects we've used a
 This isn't an entirely JS-free endeavour, unfortunately. Once we've imported the library, we still need to:
 
 1. Use a `setup` function to tell scrollama which elements to target (let's say, anything with the `.step` class)
-2. Give it event handlers: functions that will run when something enters or exits. To start, let's keep it simple and have it apply or remove a CSS class, `.is-active`.
+2. Give it event handlers: functions that will run when something enters or exits.
+  - We need to define two event handlers; one for elements entering the view (`onStepEnter`) and another for them leaving the view (`onStepExit`).
+  - To start, let's keep it simple(r) and have them just apply or remove a CSS class, `.is-active`. (We'll add some CSS style to make them purple when they have this class!)
 
-## Demo: A flashy series of boxes
+# Demo: A flashy series of boxes
 
 ```{ojs}
 //| output: false
@@ -108,12 +105,13 @@ This isn't an entirely JS-free endeavour, unfortunately. Once we've imported the
 scrollama = require("scrollama@3.1.1")
 scroller = scrollama();
 
-// setup the instance, pass callback functions
+// initialise the library and pass event handlers to 
 scroller
   .setup({
     step: ".step",
   })
   .onStepEnter((response) => {
+    // the box is passed to this function so we can change it!
     console.log("Enter triggered")
     console.log(response)
     // { element, index, direction }
@@ -128,6 +126,7 @@ scroller
   });
 ```
 
+```{=html}
 <style>
 #columnscroller .step {
   background-color: #ccc;
@@ -145,7 +144,7 @@ scroller
   transform: rotate(1.25deg) scale(1.05);
 }
 </style>
-
+```
 
 :::: {#columnscroller}
 
@@ -167,8 +166,10 @@ And a third, I guess.
 
 This works nicely!
 
-Looking at the `console.log` statements, we can see our event handlers get an object that includes not just the element being targeted, but also its index (is this its DOM order compared to similarly targeted things?) and the direction (`"up"` or `"down"`) by which it's exiting.
+If you open your browser's developer tools (Cmd+Opt+I on a Mac or Ctrl+Alt+I on Windows) and go to the Console pane, you can see it log the `response `object every time one of our event handlers fires (because an element scrolls into or out of view). Those are the `console.log` functions above.
+
+The `response` object that we're printing shows all the information we get when these event handlers fire.That includes not just the element being targeted, but also its index (TODO - is this its DOM order compared to similarly targeted things?) and the direction (`"up"` or `"down"`) by which it's exiting.
 
 You could theoretically use these event handlers, `onStepEnter` and `onStepExit`, to do anything. You could have the boxes being detected be invisible, for example, and just use them as trigger points - the actual thing being modified could be sticky and sitting at the top.
 
-Let's see how well that works with our two-column example from before.
+TODO - Let's see how well that works with our two-column example from before.
