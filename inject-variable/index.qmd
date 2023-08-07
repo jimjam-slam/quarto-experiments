@@ -1,0 +1,46 @@
+---
+title: "Inject OJS variable from vanilla JavaScript"
+subtitle: "Make something you load with vanilla JavaScript be accessible as an OJS variable"
+author: "James Goldie"
+---
+
+Most JavaScript libraries work just fine in OJS. But for a current project I want to use a framework that needs to be loaded in vanilla JavaScript (because we want to make a Quarto extension that uses it, and we can't inject OJS code into a Quarto doc without considerable work).
+
+The library has a constructor function, and the object it sends back can be configured to have callbacks that respond to browser events. I want to rig those callbacks so that they update an OJS variable—that way, users of our extension can access its state and use it to drive visualisations.
+
+So the question is, can we declare and update an OJS variable from vanilla JavaScript?
+
+I can see that `window._ojs` exists, and that `window._ojs.ojsConnector` has a `mainModule` that appears to (further down) contain variables being declared in my OJS blocks. For example, here's an OJS variable, 'myMessage':
+
+```{ojs}
+myMessage = 23
+```
+
+if I run this vanilla JS in the browser devtools:
+
+```js
+const ojsVars = window._ojs.ojsConnector.mainModule._scope.entries()
+const var1 = ojsVars.next().value
+
+var1[0]
+// "myMessage" 
+
+var1[1]._value
+// 23
+```
+
+Great! There may be a problem checking that the runtime and module have loaded, but we can at least see it.
+
+The [OJS runtime docs](https://github.com/observablehq/runtime/blob/v3.0.5/README.md) describe the process of attaching a variable to a _module_ (which is a namespace for variables), and a module to a _runtime_ (an instance of OJS, I think) as something like:
+
+```js
+const runtime = new Runtime(builtins);
+const module = runtime.module();
+const a = module.variable();
+// define as a constant
+a.define("foo", 42);
+
+// define another variable that takes an argument
+const b = module.variable();
+b.define(["foo"], foo => foo * 2);
+```
