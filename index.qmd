@@ -3,8 +3,13 @@ title: "Quarto experiments"
 author: "James Goldie"
 ---
 
+These experiments are about adding the power of web packages and libraries to your Quarto documents. There's a focus on keeping things as Quarto-ish as possible and not "popping the hood" where we can avoid it.
+
 Experiments include:
 
 * [`modal-dialog`](./modal-dialog): add a popup to your report/blog post/slides
 * [`juxtapose`](./juxtapose): before-and-after images with a slider
-* [`vertical-slides`](./vertical-slides): a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to look like you're sinking down into the sea
+* [`vertical-slides`](./vertical-slides): a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to make it look like you're sinking down into the sea
+* [`scrollytelling`](./scrollytelling): (WIP) some scrollytelling (and scrollytelling-adjacent) techniques for your Quarto documents, from easier to harder
+
+Each of the experiments has a code button, but you can also check out [the repo itself on GitHub](https://github.com/jimjam-slam/quarto-experiments).

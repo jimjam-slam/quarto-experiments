@@ -1,6 +1,7 @@
 ---
 format:
   revealjs:
+    width: 1300
     controls: true
     transition: slide
     theme: [default, style.scss]
@@ -11,6 +12,11 @@ format:
 # Sinking Slides {style="text-align:right;"}
 
 <h2>By James<h2>
+
+```{r}
+#| include: false
+library(tidyverse)
+```
 
 ## {.center}
 :::: {.columns}
@@ -59,6 +65,174 @@ Now it's different content entirely:
 
 ## {.center}
 
-## {.center}
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| echo: true
+myplot <- ggplot(diamonds) +
+  aes(price, carat) +
+  geom_point() +
+  theme_minimal(base_size = 24) +
+  theme(
+    text =
+      element_text(colour = "white"),
+    axis.text = 
+      element_text(colour = "white"),
+    plot.background =
+      element_rect(fill = NA, colour = NA),
+    panel.background =
+      element_rect(fill = NA, colour = NA),
+    panel.grid =
+      element_line(colour = alpha("white", 0.25))
+  )
+```
+:::
+
+::: {.column width="50%"}
+Let's get more sophisticated with some evolving content. First, a ggplot2 graphic.
+:::
+
+::::
+
+## {.center auto-animate=true}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| dev.args: !expr list(bg = 'transparent')
+#| data-id: myplot
+myplot
+```
+:::
+
+::: {.column width="50%"}
+Here it is on its own...
+:::
+
+::::
+
+## {.center auto-animate=true}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+```{r}
+#| dev.args: !expr list(bg = 'transparent')
+#| data-id: myplot
+myplot +
+  aes(colour = cut) +
+  scale_colour_discrete(guide = NULL)
+```
+:::
+
+::: {.column width="50%"}
+But now we can add another aesthetic!
+
+(It could use a legend, though...)
+:::
+
+::::
+
+## {.center .smaller}
+
+:::: {.columns}
+
+::: {.column width="40%"}
+```{ojs}
+//| echo: true
+mydata = [
+  {
+    name: "Azlan",
+    team: "Banana",
+    value: 40
+  },
+  {
+    name: "Vader",
+    team: "Apple",
+    value: 75
+  },
+  {
+    name: "Mickey",
+    team: "Orange",
+    value: 15
+  },
+  {
+    name: "Donald",
+    team: "Grape",
+    value: 20
+  },
+  {
+    name: "Pluto",
+    team: "Orange",
+    value: 35
+  }
+]
+```
+:::
+
+::: {.column width="60%"}
+Okay, that's not super exciting. Let's try something with D3.
+
+One option is the [`revealVizScrollyteling` plugin](https://github.com/john-guerra/revealVizScrollyteling)...
+
+... but I'd really like to just let Revealjs's auto-animate take care of it and not write animations in a super imperative way.
+
+Let's see if attaching `data-id` attributes to our D3 elements is enough!
+:::
+
+::::
 
 ## {.center}
+
+:::: {.columns}
+
+::: {.column width="50%"}
+
+```{ojs}
+// {
+//   const svg =
+//     d3.create("svg")
+//       .attr("width",  "300px")
+//       .attr("height", "500px")
+//       .attr("viewBox", [0, 0, 300, 500])
+//       .attr("style",
+//         "max-width: 100%; height: auto; height: intrinsic;");
+
+//   // X axis
+//   var x = d3.scaleBand()  
+//     .range([ 0, width ])
+//     .domain(data.map(function(d) { return d.Country; }))
+//     .padding(0.2);
+//   svg.append("g")
+//     .attr("transform", "translate(0," + height + ")")
+//     .call(d3.axisBottom(x))
+//     .selectAll("text")
+//       .attr("transform", "translate(-10,0)rotate(-45)")
+//       .style("text-anchor", "end");
+// }
+
+Plot.plot({
+  marks: [
+    Plot.barY(mydata,
+      {
+        x: "team",
+        y: "value",
+        name: "name"
+      })
+  ],
+  style: {
+    color: "white",
+    backgroundColor: "transparent"
+  }
+})
+```
+
+:::
+
+::: {.column width="50%"}
+Here're some bars.
+:::
+
+::::

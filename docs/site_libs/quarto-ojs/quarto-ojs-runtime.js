@@ -1,4 +1,4 @@
-// @quarto/quarto-ojs-runtime v0.0.5 Copyright 2022 undefined
+// @quarto/quarto-ojs-runtime v0.0.10 Copyright 2022 undefined
 var EOL = {},
     EOF = {},
     QUOTE = 34,
@@ -9289,6 +9289,16 @@ var dist = {exports: {}};
 	  })(node, state);
 	}
 
+	// A full walk triggers the callback on each node
+	function full(node, callback, baseVisitor, state, override) {
+	  if (!baseVisitor) { baseVisitor = base
+	  ; }(function c(node, st, override) {
+	    var type = override || node.type;
+	    baseVisitor[type](node, st, c);
+	    if (!override) { callback(node, st, type); }
+	  })(node, state, override);
+	}
+
 	// Fallback to an Object.create polyfill for older environments.
 	var create = Object.create || function(proto) {
 	  function Ctor() {}
@@ -10163,7 +10173,12 @@ var dist = {exports: {}};
 	    cell.secrets = new Map();
 	  }
 	  return cell;
-	}var index=/*#__PURE__*/Object.freeze({__proto__:null,parseCell: parseCell,peekId: peekId,CellParser: CellParser,parseModule: parseModule,ModuleParser: ModuleParser,walk: walk});const extractPath = path => {
+	}var index=/*#__PURE__*/Object.freeze({__proto__:null,parseCell: parseCell,peekId: peekId,CellParser: CellParser,parseModule: parseModule,ModuleParser: ModuleParser,walk: walk});/**
+	 *  FINISH REPLACING THE SIMPLE WALKER WITH A FULL WALKER THAT DOES SUBSTITUTION ALL AT ONCE.
+	 * 
+	 */
+
+	const extractPath = path => {
 	  let source = path;
 	  let m;
 
@@ -10241,64 +10256,62 @@ var dist = {exports: {}};
 	  if (cell.id && cell.id.name) name = cell.id.name;
 	  else if (cell.id && cell.id.id && cell.id.id.name) name = cell.id.id.name;
 	  let bodyText = cell.input.substring(cell.body.start, cell.body.end);
-	  const cellReferences = (cell.references || []).map(ref => {
+	  let expressionMap = {};
+	  let references = [];
+	  const cellReferences = Array.from(new Set((cell.references || []).map(ref => {
 	    if (ref.type === "ViewExpression") {
+	      if (expressionMap[ref.id.name] === undefined) {
+	        expressionMap[ref.id.name] = ref.id.name;
+	        references.push(ref.id.name);
+	      }
 	      return "viewof " + ref.id.name;
 	    } else if (ref.type === "MutableExpression") {
+	      if (expressionMap[ref.id.name] === undefined) {
+	        expressionMap[ref.id.name] = ref.id.name;
+	        references.push(ref.id.name);
+	      }
 	      return "mutable " + ref.id.name;
-	    } else return ref.name;
-	  });
-	  let $count = 0;
-	  let indexShift = 0;
-	  const references = (cell.references || []).map(ref => {
-	    if (ref.type === "ViewExpression") {
-	      const $string = "$" + $count;
-	      $count++;
-	      // replace "viewof X" in bodyText with "$($count)"
-	      simple(
-	        cell.body,
-	        {
-	          ViewExpression(node) {
-	            const start = node.start - cell.body.start;
-	            const end = node.end - cell.body.start;
-	            bodyText =
-	              bodyText.slice(0, start + indexShift) +
-	              $string +
-	              bodyText.slice(end + indexShift);
-	            indexShift += $string.length - (end - start);
-	          }
-	        },
-	        walk
-	      );
-	      return $string;
-	    } else if (ref.type === "MutableExpression") {
-	      const $string = "$" + $count;
-	      const $stringValue = $string + ".value";
-	      $count++;
-	      // replace "mutable Y" in bodyText with "$($count).value"
-	      simple(
-	        cell.body,
-	        {
-	          MutableExpression(node) {
-	            const start = node.start - cell.body.start;
-	            const end = node.end - cell.body.start;
-	            bodyText =
-	              bodyText.slice(0, start + indexShift) +
-	              $stringValue +
-	              bodyText.slice(end + indexShift);
-	            indexShift += $stringValue.length - (end - start);
-	          }
-	        },
-	        walk
-	      );
-	      return $string;
-	    } else return ref.name;
-	  });
+	    } else {
+	      references.push(ref.name);
+	      return ref.name;
+	    }
+	  })));
+	  const uniq = (lst) => {
+	    const result = [];
+	    const s = new Set();
+	    for (const v of lst) {
+	      if (s.has(v)) continue;
+	      s.add(v);
+	      result.push(v);
+	    }
+	    return result;
+	  };
+	  const patches = [];
+	  let latestPatch = { newStr: "", span: [cell.body.start, cell.body.start] };
+	  full(cell.body, node => {
+	    if (node.type === "ViewExpression" || node.type === "MutableExpression") {
+	      // cover previous ground?
+	      if (node.start !== latestPatch.span[1]) {
+	        patches.push({ newStr: cell.input.substring(latestPatch.span[1], node.start)});
+	      }
+	      const suffix = node.type === "MutableExpression" ? ".value" : "";
+	      const newStr = `${expressionMap[node.id.name]}${suffix}`;
+	      const patch = {
+	        newStr,
+	        span: [node.start, node.end]
+	      };
+	      latestPatch = patch;
+	      patches.push(patch);
+	    }
+	  }, walk);
+	  patches.push({newStr: cell.input.substring(latestPatch.span[1], cell.body.end), span: [latestPatch.span[1], cell.body.end]});
+	  bodyText = patches.map(x => x.newStr).join("");
+
 	  return {
 	    cellName: name,
-	    references: Array.from(new Set(references)),
+	    references: uniq(references),
 	    bodyText,
-	    cellReferences: Array.from(new Set(cellReferences))
+	    cellReferences: uniq(cellReferences)
 	  };
 	}function names(cell) {
 	  if (cell.body && cell.body.specifiers)
@@ -11111,10 +11124,10 @@ function getLineInfo(input, offset) {
 var defaultOptions = {
   // `ecmaVersion` indicates the ECMAScript version to parse. Must be
   // either 3, 5, 6 (or 2015), 7 (2016), 8 (2017), 9 (2018), 10
-  // (2019), 11 (2020), 12 (2021), 13 (2022), or `"latest"` (the
-  // latest version the library supports). This influences support
-  // for strict mode, the set of reserved words, and support for
-  // new syntax features.
+  // (2019), 11 (2020), 12 (2021), 13 (2022), 14 (2023), or `"latest"`
+  // (the latest version the library supports). This influences
+  // support for strict mode, the set of reserved words, and support
+  // for new syntax features.
   ecmaVersion: null,
   // `sourceType` indicates the mode the code should be parsed in.
   // Can be either `"script"` or `"module"`. This influences global
@@ -11148,8 +11161,9 @@ var defaultOptions = {
   // When enabled, super identifiers are not constrained to
   // appearing in methods and do not raise an error when they appear elsewhere.
   allowSuperOutsideMethod: null,
-  // When enabled, hashbang directive in the beginning of file
-  // is allowed and treated as a line comment.
+  // When enabled, hashbang directive in the beginning of file is
+  // allowed and treated as a line comment. Enabled by default when
+  // `ecmaVersion` >= 2023.
   allowHashBang: false,
   // When `locations` is on, `loc` properties holding objects with
   // `start` and `end` properties in `{line, column}` form (with
@@ -11223,6 +11237,9 @@ function getOptions(opts) {
 
   if (options.allowReserved == null)
     { options.allowReserved = options.ecmaVersion < 5; }
+
+  if (opts.allowHashBang == null)
+    { options.allowHashBang = options.ecmaVersion >= 14; }
 
   if (isArray(options.onToken)) {
     var tokens = options.onToken;
@@ -11554,7 +11571,7 @@ pp$9.checkPatternErrors = function(refDestructuringErrors, isAssign) {
   if (refDestructuringErrors.trailingComma > -1)
     { this.raiseRecoverable(refDestructuringErrors.trailingComma, "Comma is not permitted after the rest element"); }
   var parens = isAssign ? refDestructuringErrors.parenthesizedAssign : refDestructuringErrors.parenthesizedBind;
-  if (parens > -1) { this.raiseRecoverable(parens, "Parenthesized pattern"); }
+  if (parens > -1) { this.raiseRecoverable(parens, isAssign ? "Assigning to rvalue" : "Parenthesized pattern"); }
 };
 
 pp$9.checkExpressionErrors = function(refDestructuringErrors, andThrow) {
@@ -12650,6 +12667,7 @@ pp$8.adaptDirectivePrologue = function(statements) {
 };
 pp$8.isDirectiveCandidate = function(statement) {
   return (
+    this.options.ecmaVersion >= 5 &&
     statement.type === "ExpressionStatement" &&
     statement.expression.type === "Literal" &&
     typeof statement.expression.value === "string" &&
@@ -13060,7 +13078,8 @@ pp$6.updateContext = function(prevType) {
     { this.exprAllowed = type.beforeExpr; }
 };
 
-// Used to handle egde case when token context could not be inferred correctly in tokenize phase
+// Used to handle egde cases when token context could not be inferred correctly during tokenization phase
+
 pp$6.overrideContext = function(tokenCtx) {
   if (this.curContext() !== tokenCtx) {
     this.context[this.context.length - 1] = tokenCtx;
@@ -13875,15 +13894,6 @@ pp$5.parseProperty = function(isPattern, refDestructuringErrors) {
         this.raise(this.start, "Comma is not permitted after the rest element");
       }
       return this.finishNode(prop, "RestElement")
-    }
-    // To disallow parenthesized identifier via `this.toAssignable()`.
-    if (this.type === types$1.parenL && refDestructuringErrors) {
-      if (refDestructuringErrors.parenthesizedAssign < 0) {
-        refDestructuringErrors.parenthesizedAssign = this.start;
-      }
-      if (refDestructuringErrors.parenthesizedBind < 0) {
-        refDestructuringErrors.parenthesizedBind = this.start;
-      }
     }
     // Parse argument.
     prop.argument = this.parseMaybeAssign(false, refDestructuringErrors);
@@ -16314,7 +16324,7 @@ pp.readWord = function() {
 
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 
-var version = "8.7.1";
+var version = "8.8.0";
 
 Parser.acorn = {
   Parser: Parser,
@@ -17343,15 +17353,34 @@ class EmptyInspector {
 
 // here we need to convert from an ES6 module to an observable module
 // in, well, a best-effort kind of way.
-function es6ImportAsObservableModule(m) {
+function es6ImportAsObservableModule(modulePromise, specs) {
+  const promiseMap = {};
+  const resolveMap = {};
+  specs.forEach(spec => {
+    promiseMap[spec] = new Promise((resolve, reject) => { resolveMap[spec] = { resolve, reject }; });
+  });
+  modulePromise.then(m => {
+    specs.forEach(spec => {
+      resolveMap[spec].resolve(m[spec]);
+    });
+  }).catch(error => {
+    specs.forEach(spec => {
+      resolveMap[spec].reject(error);
+    });
+  });
   return function (runtime, observer) {
     const main = runtime.module();
 
+    specs.forEach(key => {
+      main.variable(observer(key)).define(key, [], () => promiseMap[key]);
+    });
+/* 
     Object.keys(m).forEach((key) => {
       const v = m[key];
-      main.variable(observer(key)).define(key, [], () => v);
-    });
 
+      main.variable(observer(key)).define(key, [], () => promiseMap[key]v);
+    });
+ */
     return main;
   };
 }
@@ -17512,7 +17541,7 @@ function importPathResolver(paths, localResolverMap) {
     return path;
   }
 
-  return async (path) => {
+  return async (path, specs) => {
     const isLocalModule = path.startsWith("/") || path.startsWith(".");
     const isImportFromObservableWebsite = path.match(
       /^https:\/\/(api\.|beta\.|)observablehq\.com\//i,
@@ -17525,6 +17554,11 @@ function importPathResolver(paths, localResolverMap) {
     let importPath, fetchPath;
     let moduleType;
     if (window._ojs.selfContained) {
+      if (path.endsWith(".ts")) {
+        path = path.replace(/\.ts$/, ".js");
+      } else if (path.endsWith(".tsx")) {
+        path = path.replace(/\.tsx$/, ".js");
+      }
       const resolved = localResolverMap.get(path);
       if (resolved === undefined) {
         throw new Error(`missing local file ${path} in self-contained mode`);
@@ -17562,8 +17596,10 @@ function importPathResolver(paths, localResolverMap) {
 
     if (moduleType === "ts" || moduleType === "tsx") {
       try {
-        const m = await import(importPath.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js"));
-        return es6ImportAsObservableModule(m);
+        const modulePromise = import(window._ojs.selfContained ? 
+          importPath : 
+          importPath.replace(/\.ts$/, ".js").replace(/\.tsx$/, ".js"));
+        return es6ImportAsObservableModule(modulePromise, specs);
       } catch (e) {
         // record the error on the browser console to make debugging
         // slightly more convenient.
@@ -17572,8 +17608,8 @@ function importPathResolver(paths, localResolverMap) {
       }
     } else if (moduleType === "js") {
       try {
-        const m = await import(importPath);
-        return es6ImportAsObservableModule(m);
+        const modulePromise = import(importPath);
+        return es6ImportAsObservableModule(modulePromise, specs);
       } catch (e) {
         // record the error on the browser console to make debugging
         // slightly more convenient.
@@ -17802,8 +17838,78 @@ class OJSConnector {
   }
 }
 
+/*!
+ * escape-html
+ * Copyright(c) 2012-2013 TJ Holowaychuk
+ * Copyright(c) 2015 Andreas Lubbe
+ * Copyright(c) 2015 Tiancheng "Timothy" Gu
+ * Copyright(c) 2022 RStudio, PBC
+ * 
+ * MIT Licensed
+ *
+ * Minimal changes to make ES6
+ * 
+ */
+
+var matchHtmlRegExp = /["'&<>]/;
+
+/**
+ * Escape special characters in the given string of text.
+ *
+ * @param  {string} string The string to escape for inserting into HTML
+ * @return {string}
+ * @public
+ */
+
+function escapeHtml (string) {
+  var str = '' + string;
+  var match = matchHtmlRegExp.exec(str);
+
+  if (!match) {
+    return str
+  }
+
+  var escape;
+  var html = '';
+  var index = 0;
+  var lastIndex = 0;
+
+  for (index = match.index; index < str.length; index++) {
+    switch (str.charCodeAt(index)) {
+      case 34: // "
+        escape = '&quot;';
+        break
+      case 38: // &
+        escape = '&amp;';
+        break
+      case 39: // '
+        escape = '&#39;';
+        break
+      case 60: // <
+        escape = '&lt;';
+        break
+      case 62: // >
+        escape = '&gt;';
+        break
+      default:
+        continue
+    }
+
+    if (lastIndex !== index) {
+      html += str.substring(lastIndex, index);
+    }
+
+    lastIndex = index + 1;
+    html += escape;
+  }
+
+  return lastIndex !== index
+    ? html + str.substring(lastIndex, index)
+    : html
+}
+
 function createHtmlElement(tag, attrs, ...children) {
-  const el = document.createElement(tag); // we should try to play nice with svg etc a la d3
+  const el = document.createElement(tag);
   for (const [key, val] of Object.entries(attrs || {})) {
     el.setAttribute(key, val);
   }
@@ -17811,17 +17917,17 @@ function createHtmlElement(tag, attrs, ...children) {
     const child = children.shift();
     if (Array.isArray(child)) {
       children.unshift(...child);
-    } else if (typeof child === "string") {
-      el.appendChild(document.createTextNode(child));
-    } else {
+    } else if (child instanceof HTMLElement) {
       el.appendChild(child);
+    } else {
+      el.appendChild(document.createTextNode(escapeHtml(child)));
     }
   }
   return el;
 }
 
 function createNamespacedElement(ns, tag, attrs, ...children) {
-  const el = document.createElementNS(ns, tag); // we should try to play nice with svg etc a la d3
+  const el = document.createElementNS(ns.namespace, tag);
   for (const [key, val] of Object.entries(attrs || {})) {
     el.setAttribute(key, val);
   }
@@ -17829,10 +17935,10 @@ function createNamespacedElement(ns, tag, attrs, ...children) {
     const child = children.shift();
     if (Array.isArray(child)) {
       children.unshift(...child);
-    } else if (typeof child === "string") {
-      el.appendChild(document.createTextNode(child));
-    } else {
+    } else if (child instanceof HTMLElement || child instanceof ns.class) {
       el.appendChild(child);
+    } else {
+      el.appendChild(document.createTextNode(escapeHtml(child)));
     }
   }
   return el;
@@ -17906,7 +18012,7 @@ const resolver = {
 };
 
 const nss = {
-  "svg": "http://www.w3.org/2000/svg"
+  "svg": { namespace: "http://www.w3.org/2000/svg", class: SVGElement }
 };
 
 function resolveCreator(tag) {
@@ -17917,7 +18023,7 @@ function resolveCreator(tag) {
   const namespace = nss[nsKey];
 
   return function(tag, attrs, ...children) {
-    return createNamespacedElement(namespace, tag, attrs, children);
+    return createNamespacedElement(namespace, tag, attrs, ...children);
   }
 }
 
@@ -18083,13 +18189,26 @@ class QuartoOJSConnector extends OJSConnector {
     if (!hasErrors) {
       preDiv.classList.remove("numberSource");
       if (preDiv._hidden === true) {
-        preDiv.parentElement.classList.add("hidden");
+        const parent = preDiv.parentElement;
+        parent.classList.add("hidden");
+        // when code-tools is active (that is, when pre is inside a details tag), we also need to hide the details tag.
+        if (parent.parentElement.tagName === "DETAILS") {
+          parent.parentElement.classList.add("hidden");
+        }
       }
     } else {
       preDiv.classList.add("numberSource");
-      if (preDiv.parentElement.classList.contains("hidden")) {
-        preDiv._hidden = true;
-        preDiv.parentElement.classList.remove("hidden");
+      const parent = preDiv.parentElement;
+      if (parent.classList.contains("hidden")) {
+        preDiv._hidden = true; // signal that we used to be hidden so that when errors go away, we're hidden again.
+        parent.classList.remove("hidden");
+
+        // when code-tools is active (that is, when pre is inside a details tag), we also need to unhide the details tag.
+        if (parent.parentElement.tagName === "DETAILS") {
+          parent.parentElement.classList.remove("hidden");
+          // open the code-tools by default when error happens.
+          parent.parentElement.setAttribute("open", "open");
+        }
       }
     }
   }
@@ -18146,7 +18265,12 @@ class QuartoOJSConnector extends OJSConnector {
     }
     // now find all ojsDivs that contain errors that need to be decorated
     // on preDiv
-    let div = preDiv.parentElement.nextElementSibling;
+    let parent = preDiv.parentElement;
+    if (parent.parentElement.tagName === "DETAILS") {
+      // we're in a code-tools setting, need to go one further up
+      parent = parent.parentElement;
+    }
+    let div = parent.nextElementSibling;
     let foundErrors = false;
     while (div !== null && div.classList.contains("cell-output-display")) {
       for (const errorSpan of div._errorSpans || []) {
@@ -18655,7 +18779,6 @@ function createRuntime() {
       // grab a new id accidentally.
       let targetElement;
       const getElement = () => {
-        // console.log("getElement called");
         targetElement = document.getElementById(targetElementId);
         let subFigId;
         if (!targetElement) {
@@ -18668,8 +18791,6 @@ function createRuntime() {
             throw new Error("Ran out of quarto subfigures.");
           }
         }
-        // console.log("getElement will return", targetElement);
-        // console.log("state: ", { targetElementId, subFigId });
         return targetElement;
       };
 
@@ -18688,6 +18809,12 @@ function createRuntime() {
         }
 
         const ojsDiv = targetElement.querySelector(".observablehq");
+        if (!ojsDiv) {
+          // we failed to find an observablehq div inside the targetElement.
+          // This is an internal error and we have no way to report it
+          // except throwing the original exception.
+          throw e;
+        }
         // because this is in an exception handler, we might need
         // to clear some of the garbage that other pieces of code
         // won't have the chance to

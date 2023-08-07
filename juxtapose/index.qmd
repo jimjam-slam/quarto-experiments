@@ -2,8 +2,11 @@
 title: "Before-and-after image demo"
 subtitle: "Driven by juxtapose.js"
 author: "James Goldie"
-css:
-  - https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css
+format:
+  html:
+    code-tools: true
+    css:
+      - https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css
 ---
 
 ## Step 1: add the CSS to the frontmatter

@@ -33,7 +33,7 @@ ul.task-list{list-style: none;}
 <link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -90,18 +90,39 @@ ul.task-list{list-style: none;}
 
 </header>
 
+<p>These experiments are about adding the power of web packages and libraries to your Quarto documents. There’s a focus on keeping things as Quarto-ish as possible and not “popping the hood” where we can avoid it.</p>
 <p>Experiments include:</p>
 <ul>
 <li><a href="./modal-dialog"><code>modal-dialog</code></a>: add a popup to your report/blog post/slides</li>
 <li><a href="./juxtapose"><code>juxtapose</code></a>: before-and-after images with a slider</li>
-<li><a href="./vertical-slides"><code>vertical-slides</code></a>: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to look like you’re sinking down into the sea</li>
+<li><a href="./vertical-slides"><code>vertical-slides</code></a>: a Revealjs presentation that uses a pre-rendered parallax gradient background and transitions to make it look like you’re sinking down into the sea</li>
+<li><a href="./scrollytelling"><code>scrollytelling</code></a>: (WIP) some scrollytelling (and scrollytelling-adjacent) techniques for your Quarto documents, from easier to harder</li>
 </ul>
+<p>Each of the experiments has a code button, but you can also check out <a href="https://github.com/jimjam-slam/quarto-experiments">the repo itself on GitHub</a>.</p>
 
 
 
 </main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
   const icon = "";
   const anchorJS = new window.AnchorJS();
   anchorJS.options = {
