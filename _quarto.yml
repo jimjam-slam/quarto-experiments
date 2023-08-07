@@ -3,4 +3,3 @@ project:
   output-dir: docs
   resources:
     - vertical-slides/*.png
-  code-tools: true

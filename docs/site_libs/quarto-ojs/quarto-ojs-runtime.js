@@ -1,4 +1,4 @@
-// @quarto/quarto-ojs-runtime v0.0.10 Copyright 2022 undefined
+// quarto-ojs-runtime v0.0.15 Copyright 2022 undefined
 var EOL = {},
     EOF = {},
     QUOTE = 34,
@@ -195,16 +195,45 @@ function autoType(object) {
 // https://github.com/d3/d3-dsv/issues/45
 const fixtz = new Date("2019-01-01T00:00").getHours() || new Date("2019-07-01T00:00").getHours();
 
+function dependency(name, version, main) {
+  return {
+    resolve(path = main) {
+      return `${name}@${version}/${path}`;
+    }
+  };
+}
+
+const d3 = dependency("d3", "7.6.1", "dist/d3.min.js");
+const inputs = dependency("@observablehq/inputs", "0.10.4", "dist/inputs.min.js");
+const plot = dependency("@observablehq/plot", "0.6.0", "dist/plot.umd.min.js");
+const graphviz = dependency("@observablehq/graphviz", "0.2.1", "dist/graphviz.min.js");
+const highlight = dependency("@observablehq/highlight.js", "2.0.0", "highlight.min.js");
+const katex = dependency("@observablehq/katex", "0.11.1", "dist/katex.min.js");
+const lodash = dependency("lodash", "4.17.21", "lodash.min.js");
+const htl = dependency("htl", "0.3.1", "dist/htl.min.js");
+const jszip = dependency("jszip", "3.10.0", "dist/jszip.min.js");
+const marked = dependency("marked", "0.3.12", "marked.min.js");
+const sql = dependency("sql.js", "1.7.0", "dist/sql-wasm.js");
+const vega = dependency("vega", "5.22.1", "build/vega.min.js");
+const vegalite = dependency("vega-lite", "5.5.0", "build/vega-lite.min.js");
+const vegaliteApi = dependency("vega-lite-api", "5.0.0", "build/vega-lite-api.min.js");
+const arrow4 = dependency("apache-arrow", "4.0.1", "Arrow.es2015.min.js");
+const arrow9 = dependency("apache-arrow", "9.0.0", "+esm");
+const arquero = dependency("arquero", "4.8.8", "dist/arquero.min.js");
+const topojson = dependency("topojson-client", "3.1.0", "dist/topojson-client.min.js");
+const exceljs = dependency("exceljs", "4.3.0", "dist/exceljs.min.js");
+const mermaid$1 = dependency("mermaid", "9.1.6", "dist/mermaid.min.js");
+const leaflet$1 = dependency("leaflet", "1.8.0", "dist/leaflet.js");
+const duckdb = dependency("@duckdb/duckdb-wasm", "1.17.0", "+esm");
+
 const metas = new Map;
 const queue$1 = [];
 const map$2 = queue$1.map;
 const some = queue$1.some;
 const hasOwnProperty$2 = queue$1.hasOwnProperty;
-const origin = "https://cdn.jsdelivr.net/npm/";
 const identifierRe = /^((?:@[^/@]+\/)?[^/@]+)(?:@([^/]+))?(?:\/(.*))?$/;
 const versionRe = /^\d+\.\d+\.\d+(-[\w-.+]+)?$/;
-const extensionRe = /\.[^/]*$/;
-const mains = ["unpkg", "jsdelivr", "browser", "main"];
+const extensionRe = /(?:\.[^/]*|\/)$/;
 
 class RequireError extends Error {
   constructor(message) {
@@ -213,15 +242,6 @@ class RequireError extends Error {
 }
 
 RequireError.prototype.name = RequireError.name;
-
-function main(meta) {
-  for (const key of mains) {
-    const value = meta[key];
-    if (typeof value === "string") {
-      return extensionRe.test(value) ? value : `${value}.js`;
-    }
-  }
-}
 
 function parseIdentifier(identifier) {
   const match = identifierRe.exec(identifier);
@@ -232,47 +252,60 @@ function parseIdentifier(identifier) {
   };
 }
 
-function resolveMeta(target) {
-  const url = `${origin}${target.name}${target.version ? `@${target.version}` : ""}/package.json`;
-  let meta = metas.get(url);
-  if (!meta) metas.set(url, meta = fetch(url).then(response => {
-    if (!response.ok) throw new RequireError("unable to load package.json");
-    if (response.redirected && !metas.has(response.url)) metas.set(response.url, meta);
-    return response.json();
-  }));
-  return meta;
-}
+function resolveFrom(origin = "https://cdn.jsdelivr.net/npm/", mains = ["unpkg", "jsdelivr", "browser", "main"]) {
+  if (!/\/$/.test(origin)) throw new Error("origin lacks trailing slash");
 
-async function resolve$1(name, base) {
-  if (name.startsWith(origin)) name = name.substring(origin.length);
-  if (/^(\w+:)|\/\//i.test(name)) return name;
-  if (/^[.]{0,2}\//i.test(name)) return new URL(name, base == null ? location : base).href;
-  if (!name.length || /^[\s._]/.test(name) || /\s$/.test(name)) throw new RequireError("illegal name");
-  const target = parseIdentifier(name);
-  if (!target) return `${origin}${name}`;
-  if (!target.version && base != null && base.startsWith(origin)) {
-    const meta = await resolveMeta(parseIdentifier(base.substring(origin.length)));
-    target.version = meta.dependencies && meta.dependencies[target.name] || meta.peerDependencies && meta.peerDependencies[target.name];
+  function main(meta) {
+    for (const key of mains) {
+      let value = meta[key];
+      if (typeof value === "string") {
+        if (value.startsWith("./")) value = value.slice(2);
+        return extensionRe.test(value) ? value : `${value}.js`;
+      }
+    }
   }
-  if (target.path && !extensionRe.test(target.path)) target.path += ".js";
-  if (target.path && target.version && versionRe.test(target.version)) return `${origin}${target.name}@${target.version}/${target.path}`;
-  const meta = await resolveMeta(target);
-  return `${origin}${meta.name}@${meta.version}/${target.path || main(meta) || "index.js"}`;
+
+  function resolveMeta(target) {
+    const url = `${origin}${target.name}${target.version ? `@${target.version}` : ""}/package.json`;
+    let meta = metas.get(url);
+    if (!meta) metas.set(url, meta = fetch(url).then(response => {
+      if (!response.ok) throw new RequireError("unable to load package.json");
+      if (response.redirected && !metas.has(response.url)) metas.set(response.url, meta);
+      return response.json();
+    }));
+    return meta;
+  }
+
+  return async function resolve(name, base) {
+    if (name.startsWith(origin)) name = name.substring(origin.length);
+    if (/^(\w+:)|\/\//i.test(name)) return name;
+    if (/^[.]{0,2}\//i.test(name)) return new URL(name, base == null ? location : base).href;
+    if (!name.length || /^[\s._]/.test(name) || /\s$/.test(name)) throw new RequireError("illegal name");
+    const target = parseIdentifier(name);
+    if (!target) return `${origin}${name}`;
+    if (!target.version && base != null && base.startsWith(origin)) {
+      const meta = await resolveMeta(parseIdentifier(base.substring(origin.length)));
+      target.version = meta.dependencies && meta.dependencies[target.name] || meta.peerDependencies && meta.peerDependencies[target.name];
+    }
+    if (target.path && !extensionRe.test(target.path)) target.path += ".js";
+    if (target.path && target.version && versionRe.test(target.version)) return `${origin}${target.name}@${target.version}/${target.path}`;
+    const meta = await resolveMeta(target);
+    return `${origin}${meta.name}@${meta.version}/${target.path || main(meta) || "index.js"}`;
+  };
 }
 
-var require = requireFrom(resolve$1);
+var require = requireFrom(resolveFrom());
 let requestsInFlight = 0;
 let prevDefine = undefined;
 
 function requireFrom(resolver) {
   const cache = new Map;
   const requireBase = requireRelative(null);
-    
+
   function requireAbsolute(url) {
     if (typeof url !== "string") return url;
     let module = cache.get(url);
     if (!module) cache.set(url, module = new Promise((resolve, reject) => {
-
       const script = document.createElement("script");
       script.onload = () => {
         try { resolve(queue$1.pop()(requireRelative(url))); }
@@ -298,6 +331,7 @@ function requireFrom(resolver) {
         window.define = define;
       }
       requestsInFlight++;
+
       document.head.appendChild(script);
     }));
     return module;
@@ -374,33 +408,18 @@ function define(name, dependencies, factory) {
 
 define.amd = {};
 
-function dependency(name, version, main) {
-  return {
-    resolve(path = main) {
-      return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
-    }
-  };
+// TODO Allow this to be overridden using the Library’s resolver.
+const cdn = "https://cdn.observableusercontent.com/npm/";
+
+let requireDefault = require;
+
+function setDefaultRequire(require) {
+  requireDefault = require;
 }
 
-const d3 = dependency("d3", "7.4.4", "dist/d3.min.js");
-const inputs = dependency("@observablehq/inputs", "0.10.4", "dist/inputs.min.js");
-const plot = dependency("@observablehq/plot", "0.4.3", "dist/plot.umd.min.js");
-const graphviz = dependency("@observablehq/graphviz", "0.2.1", "dist/graphviz.min.js");
-const highlight = dependency("@observablehq/highlight.js", "2.0.0", "highlight.min.js");
-const katex = dependency("@observablehq/katex", "0.11.1", "dist/katex.min.js");
-const lodash = dependency("lodash", "4.17.21", "lodash.min.js");
-const htl = dependency("htl", "0.3.1", "dist/htl.min.js");
-const jszip = dependency("jszip", "3.9.1", "dist/jszip.min.js");
-const marked = dependency("marked", "0.3.12", "marked.min.js");
-const sql = dependency("sql.js", "1.6.2", "dist/sql-wasm.js");
-const vega = dependency("vega", "5.22.1", "build/vega.min.js");
-const vegalite = dependency("vega-lite", "5.2.0", "build/vega-lite.min.js");
-const vegaliteApi = dependency("vega-lite-api", "5.0.0", "build/vega-lite-api.min.js");
-const arrow = dependency("apache-arrow", "4.0.1", "Arrow.es2015.min.js");
-const arquero = dependency("arquero", "4.8.8", "dist/arquero.min.js");
-const topojson = dependency("topojson-client", "3.1.0", "dist/topojson-client.min.js");
-const exceljs = dependency("exceljs", "4.3.0", "dist/exceljs.min.js");
-const mermaid$1 = dependency("mermaid", "9.0.0", "dist/mermaid.min.js");
+function requirer(resolver) {
+  return resolver == null ? requireDefault : requireFrom(resolver);
+}
 
 function fromEntries(obj) {
   const result = {};
@@ -410,9 +429,9 @@ function fromEntries(obj) {
   return result;
 }
 
-async function sqlite(require) {
-  const init = await require(sql.resolve());
-  return init({locateFile: file => sql.resolve(`dist/${file}`)});
+async function SQLite(require) {
+  const [init, dist] = await Promise.all([require(sql.resolve()), require.resolve(sql.resolve("dist/"))]);
+  return init({locateFile: file => `${dist}${file}`});
 }
 
 class SQLiteDatabaseClient {
@@ -422,7 +441,7 @@ class SQLiteDatabaseClient {
     });
   }
   static async open(source) {
-    const [SQL, buffer] = await Promise.all([sqlite(require), Promise.resolve(source).then(load$1)]);
+    const [SQL, buffer] = await Promise.all([SQLite(requireDefault), Promise.resolve(source).then(load$1)]);
     return new SQLiteDatabaseClient(new SQL.Database(buffer));
   }
   async query(query, params) {
@@ -437,6 +456,15 @@ class SQLiteDatabaseClient {
       text$2(rows.map(row => row.detail).join("\n"))
     ]);
   }
+  async describeTables({schema} = {}) {
+    return this.query(`SELECT NULLIF(schema, 'main') AS schema, name FROM pragma_table_list() WHERE type = 'table'${schema == null ? "" : ` AND schema = ?`} AND name NOT LIKE 'sqlite_%'`, schema == null ? [] : [schema]);
+  }
+  async describeColumns({schema, table} = {}) {
+    if (table == null) throw new Error(`missing table`);
+    const rows = await this.query(`SELECT name, type, "notnull" FROM pragma_table_info(?${schema == null ? "" : `, ?`}) ORDER BY cid`, schema == null ? [table] : [table, schema]);
+    if (!rows.length) throw new Error(`table not found: ${table}`);
+    return rows.map(({name, type, notnull}) => ({name, type: sqliteType(type), databaseType: type, nullable: !notnull}));
+  }
   async describe(object) {
     const rows = await (object === undefined
       ? this.query(`SELECT name FROM sqlite_master WHERE type = 'table'`)
@@ -448,13 +476,53 @@ class SQLiteDatabaseClient {
       element$1("tbody", rows.map(r => element$1("tr", columns.map(c => element$1("td", [text$2(r[c])])))))
     ]);
   }
-  async sql(strings, ...args) {
-    return this.query(strings.join("?"), args);
+  async sql() {
+    return this.query(...this.queryTag.apply(this, arguments));
+  }
+  queryTag(strings, ...params) {
+    return [strings.join("?"), params];
   }
 }
+
 Object.defineProperty(SQLiteDatabaseClient.prototype, "dialect", {
   value: "sqlite"
 });
+
+// https://www.sqlite.org/datatype3.html
+function sqliteType(type) {
+  switch (type) {
+    case "NULL":
+      return "null";
+    case "INT":
+    case "INTEGER":
+    case "TINYINT":
+    case "SMALLINT":
+    case "MEDIUMINT":
+    case "BIGINT":
+    case "UNSIGNED BIG INT":
+    case "INT2":
+    case "INT8":
+      return "integer";
+    case "TEXT":
+    case "CLOB":
+      return "string";
+    case "REAL":
+    case "DOUBLE":
+    case "DOUBLE PRECISION":
+    case "FLOAT":
+    case "NUMERIC":
+      return "number";
+    case "BLOB":
+      return "buffer";
+    case "DATE":
+    case "DATETIME":
+      return "string"; // TODO convert strings to Date instances in sql.js
+    default:
+      return /^(?:(?:(?:VARYING|NATIVE) )?CHARACTER|(?:N|VAR|NVAR)CHAR)\(/.test(type) ? "string"
+        : /^(?:DECIMAL|NUMERIC)\(/.test(type) ? "number"
+        : "other";
+  }
+}
 
 function load$1(source) {
   return typeof source === "string" ? fetch(source).then(load$1)
@@ -490,8 +558,8 @@ class Workbook {
       _: {value: workbook},
       sheetNames: {
         value: workbook.worksheets.map((s) => s.name),
-        enumerable: true,
-      },
+        enumerable: true
+      }
     });
   }
   sheet(name, options) {
@@ -568,7 +636,7 @@ function parseRange(specifier = ":", {columnCount, rowCount}) {
     specifier.split(":").map(fromCellReference);
   return [
     [c0, r0],
-    [c1, r1],
+    [c1, r1]
   ];
 }
 
@@ -646,15 +714,24 @@ class AbstractFile {
       i.src = url;
     });
   }
-  async arrow() {
-    const [Arrow, response] = await Promise.all([require(arrow.resolve()), remote_fetch(this)]);
-    return Arrow.Table.from(response);
+  async arrow({version = 4} = {}) {
+    switch (version) {
+      case 4: {
+        const [Arrow, response] = await Promise.all([requireDefault(arrow4.resolve()), remote_fetch(this)]);
+        return Arrow.Table.from(response);
+      }
+      case 9: {
+        const [Arrow, response] = await Promise.all([import(`${cdn}${arrow9.resolve()}`), remote_fetch(this)]);
+        return Arrow.tableFromIPC(response);
+      }
+      default: throw new Error(`unsupported arrow version: ${version}`);
+    }
   }
   async sqlite() {
     return SQLiteDatabaseClient.open(remote_fetch(this));
   }
   async zip() {
-    const [JSZip, buffer] = await Promise.all([require(jszip.resolve()), this.arrayBuffer()]);
+    const [JSZip, buffer] = await Promise.all([requireDefault(jszip.resolve()), this.arrayBuffer()]);
     return new ZipArchive(await JSZip.loadAsync(buffer));
   }
   async xml(mimeType = "application/xml") {
@@ -664,7 +741,7 @@ class AbstractFile {
     return this.xml("text/html");
   }
   async xlsx() {
-    const [ExcelJS, buffer] = await Promise.all([require(exceljs.resolve()), this.arrayBuffer()]);
+    const [ExcelJS, buffer] = await Promise.all([requireDefault(exceljs.resolve()), this.arrayBuffer()]);
     return new Workbook(await new ExcelJS.Workbook().xlsx.load(buffer));
   }
 }
@@ -860,18 +937,19 @@ Id.prototype.toString = function() {
   return "url(" + this.href + ")";
 };
 
-var DOM = {
-  canvas: canvas,
-  context2d: context2d,
-  download: download,
-  element: element,
-  input: input$1,
-  range: range$1,
-  select: select,
-  svg: svg$1,
-  text: text$1,
-  uid: uid
-};
+var DOM = /*#__PURE__*/Object.freeze({
+__proto__: null,
+canvas: canvas,
+context2d: context2d,
+download: download,
+element: element,
+input: input$1,
+range: range$1,
+select: select,
+svg: svg$1,
+text: text$1,
+uid: uid
+});
 
 function buffer(file) {
   return new Promise(function(resolve, reject) {
@@ -900,11 +978,12 @@ function url(file) {
   });
 }
 
-var Files = {
-  buffer: buffer,
-  text: text,
-  url: url
-};
+var Files = /*#__PURE__*/Object.freeze({
+__proto__: null,
+buffer: buffer,
+text: text,
+url: url
+});
 
 function that() {
   return this;
@@ -1063,17 +1142,354 @@ function worker(source) {
   });
 }
 
-var Generators$1 = {
-  disposable: disposable,
-  filter: filter,
-  input: input,
-  map: map$1,
-  observe: observe,
-  queue: queue,
-  range: range,
-  valueAt: valueAt,
-  worker: worker
-};
+var Generators$1 = /*#__PURE__*/Object.freeze({
+__proto__: null,
+disposable: disposable,
+filter: filter,
+input: input,
+map: map$1,
+observe: observe,
+queue: queue,
+range: range,
+valueAt: valueAt,
+worker: worker
+});
+
+// Returns true if the vaue is an Apache Arrow table. This uses a “duck” test
+// (instead of strict instanceof) because we want it to work with a range of
+// Apache Arrow versions at least 7.0.0 or above.
+// https://arrow.apache.org/docs/7.0/js/classes/Arrow_dom.Table.html
+function isArrowTable(value) {
+  return (
+    value &&
+    typeof value.getChild === "function" &&
+    typeof value.toArray === "function" &&
+    value.schema &&
+    Array.isArray(value.schema.fields)
+  );
+}
+
+function getArrowTableSchema(table) {
+  return table.schema.fields.map(getArrowFieldSchema);
+}
+
+function getArrowFieldSchema(field) {
+  return {
+    name: field.name,
+    type: getArrowType(field.type),
+    nullable: field.nullable,
+    databaseType: String(field.type)
+  };
+}
+
+// https://github.com/apache/arrow/blob/89f9a0948961f6e94f1ef5e4f310b707d22a3c11/js/src/enum.ts#L140-L141
+function getArrowType(type) {
+  switch (type.typeId) {
+    case 2: // Int
+      return "integer";
+    case 3: // Float
+    case 7: // Decimal
+      return "number";
+    case 4: // Binary
+    case 15: // FixedSizeBinary
+      return "buffer";
+    case 5: // Utf8
+      return "string";
+    case 6: // Bool
+      return "boolean";
+    case 8: // Date
+    case 9: // Time
+    case 10: // Timestamp
+      return "date";
+    case 12: // List
+    case 16: // FixedSizeList
+      return "array";
+    case 13: // Struct
+    case 14: // Union
+      return "object";
+    case 11: // Interval
+    case 17: // Map
+    default:
+      return "other";
+  }
+}
+
+// Adapted from https://observablehq.com/@cmudig/duckdb-client
+// Copyright 2021 CMU Data Interaction Group
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice,
+//    this list of conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice,
+//    this list of conditions and the following disclaimer in the documentation
+//    and/or other materials provided with the distribution.
+//
+// 3. Neither the name of the copyright holder nor the names of its contributors
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+class DuckDBClient {
+  constructor(db) {
+    Object.defineProperties(this, {
+      _db: {value: db}
+    });
+  }
+
+  async queryStream(query, params) {
+    const connection = await this._db.connect();
+    let reader, batch;
+    try {
+      if (params?.length > 0) {
+        const statement = await connection.prepare(query);
+        reader = await statement.send(...params);
+      } else {
+        reader = await connection.send(query);
+      }
+      batch = await reader.next();
+      if (batch.done) throw new Error("missing first batch");
+    } catch (error) {
+      await connection.close();
+      throw error;
+    }
+    return {
+      schema: getArrowTableSchema(batch.value),
+      async *readRows() {
+        try {
+          while (!batch.done) {
+            yield batch.value.toArray();
+            batch = await reader.next();
+          }
+        } finally {
+          await connection.close();
+        }
+      }
+    };
+  }
+
+  async query(query, params) {
+    const result = await this.queryStream(query, params);
+    const results = [];
+    for await (const rows of result.readRows()) {
+      for (const row of rows) {
+        results.push(row);
+      }
+    }
+    results.schema = result.schema;
+    return results;
+  }
+
+  async queryRow(query, params) {
+    const result = await this.queryStream(query, params);
+    const reader = result.readRows();
+    try {
+      const {done, value} = await reader.next();
+      return done || !value.length ? null : value[0];
+    } finally {
+      await reader.return();
+    }
+  }
+
+  async sql(strings, ...args) {
+    return await this.query(strings.join("?"), args);
+  }
+
+  queryTag(strings, ...params) {
+    return [strings.join("?"), params];
+  }
+
+  escape(name) {
+    return `"${name}"`;
+  }
+
+  async describeTables() {
+    const tables = await this.query(`SHOW TABLES`);
+    return tables.map(({name}) => ({name}));
+  }
+
+  async describeColumns({table} = {}) {
+    const columns = await this.query(`DESCRIBE ${table}`);
+    return columns.map(({column_name, column_type, null: nullable}) => ({
+      name: column_name,
+      type: getDuckDBType(column_type),
+      nullable: nullable !== "NO",
+      databaseType: column_type
+    }));
+  }
+
+  static async of(sources = {}, config = {}) {
+    const db = await createDuckDB();
+    if (config.query?.castTimestampToDate === undefined) {
+      config = {...config, query: {...config.query, castTimestampToDate: true}};
+    }
+    await db.open(config);
+    await Promise.all(
+      Object.entries(sources).map(async ([name, source]) => {
+        if (source instanceof FileAttachment) { // bare file
+          await insertFile(db, name, source);
+        } else if (isArrowTable(source)) { // bare arrow table
+          await insertArrowTable(db, name, source);
+        } else if (Array.isArray(source)) { // bare array of objects
+          await insertArray(db, name, source);
+        } else if ("data" in source) { // data + options
+          const {data, ...options} = source;
+          if (isArrowTable(data)) {
+            await insertArrowTable(db, name, data, options);
+          } else {
+            await insertArray(db, name, data, options);
+          }
+        } else if ("file" in source) { // file + options
+          const {file, ...options} = source;
+          await insertFile(db, name, file, options);
+        } else {
+          throw new Error(`invalid source: ${source}`);
+        }
+      })
+    );
+    return new DuckDBClient(db);
+  }
+}
+
+Object.defineProperty(DuckDBClient.prototype, "dialect", {
+  value: "duckdb"
+});
+
+async function insertFile(database, name, file, options) {
+  const url = await file.url();
+  if (url.startsWith("blob:")) {
+    const buffer = await file.arrayBuffer();
+    await database.registerFileBuffer(file.name, new Uint8Array(buffer));
+  } else {
+    await database.registerFileURL(file.name, url);
+  }
+  const connection = await database.connect();
+  try {
+    switch (file.mimeType) {
+      case "text/csv":
+        return await connection.insertCSVFromPath(file.name, {
+          name,
+          schema: "main",
+          ...options
+        });
+      case "application/json":
+        return await connection.insertJSONFromPath(file.name, {
+          name,
+          schema: "main",
+          ...options
+        });
+      default:
+        if (/\.arrow$/i.test(file.name)) {
+          const buffer = new Uint8Array(await file.arrayBuffer());
+          return await connection.insertArrowFromIPCStream(buffer, {
+            name,
+            schema: "main",
+            ...options
+          });
+        }
+        if (/\.parquet$/i.test(file.name)) {
+          return await connection.query(
+            `CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`
+          );
+        }
+        throw new Error(`unknown file type: ${file.mimeType}`);
+    }
+  } finally {
+    await connection.close();
+  }
+}
+
+async function insertArrowTable(database, name, table, options) {
+  const arrow = await loadArrow();
+  const buffer = arrow.tableToIPC(table);
+  const connection = await database.connect();
+  try {
+    await connection.insertArrowFromIPCStream(buffer, {
+      name,
+      schema: "main",
+      ...options
+    });
+  } finally {
+    await connection.close();
+  }
+}
+
+async function insertArray(database, name, array, options) {
+  const arrow = await loadArrow();
+  const table = arrow.tableFromJSON(array);
+  return await insertArrowTable(database, name, table, options);
+}
+
+async function createDuckDB() {
+  const duck = await import(`${cdn}${duckdb.resolve()}`);
+  const bundle = await duck.selectBundle({
+    mvp: {
+      mainModule: `${cdn}${duckdb.resolve("dist/duckdb-mvp.wasm")}`,
+      mainWorker: `${cdn}${duckdb.resolve("dist/duckdb-browser-mvp.worker.js")}`
+    },
+    eh: {
+      mainModule: `${cdn}${duckdb.resolve("dist/duckdb-eh.wasm")}`,
+      mainWorker: `${cdn}${duckdb.resolve("dist/duckdb-browser-eh.worker.js")}`
+    }
+  });
+  const logger = new duck.ConsoleLogger();
+  const worker = await duck.createWorker(bundle.mainWorker);
+  const db = new duck.AsyncDuckDB(logger, worker);
+  await db.instantiate(bundle.mainModule);
+  return db;
+}
+
+async function loadArrow() {
+  return await import(`${cdn}${arrow9.resolve()}`);
+}
+
+// https://duckdb.org/docs/sql/data_types/overview
+function getDuckDBType(type) {
+  switch (type) {
+    case "BIGINT":
+    case "HUGEINT":
+    case "UBIGINT":
+      return "bigint";
+    case "DOUBLE":
+    case "REAL":
+      return "number";
+    case "INTEGER":
+    case "SMALLINT":
+    case "TINYINT":
+    case "USMALLINT":
+    case "UINTEGER":
+    case "UTINYINT":
+      return "integer";
+    case "BOOLEAN":
+      return "boolean";
+    case "DATE":
+    case "TIMESTAMP":
+    case "TIMESTAMP WITH TIME ZONE":
+      return "date";
+    case "VARCHAR":
+    case "UUID":
+      return "string";
+    // case "BLOB":
+    // case "INTERVAL":
+    // case "TIME":
+    default:
+      if (/^DECIMAL\(/.test(type)) return "integer";
+      return "other";
+  }
+}
 
 function template(render, wrapper) {
   return function(strings) {
@@ -1141,13 +1557,24 @@ function template(render, wrapper) {
   };
 }
 
-var html$1 = template(function(string) {
+const html$1 = template(function(string) {
   var template = document.createElement("template");
   template.innerHTML = string.trim();
   return document.importNode(template.content, true);
 }, function() {
   return document.createElement("span");
 });
+
+async function leaflet(require) {
+  const L = await require(leaflet$1.resolve());
+  if (!L._style) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = await require.resolve(leaflet$1.resolve("dist/leaflet.css"));
+    L._style = document.head.appendChild(link);
+  }
+  return L;
+}
 
 function md(require) {
   return require(marked.resolve()).then(function(marked) {
@@ -1246,11 +1673,12 @@ function tick(duration, value) {
   return when(Math.ceil((Date.now() + 1) / duration) * duration, value);
 }
 
-var Promises = {
-  delay: delay,
-  tick: tick,
-  when: when
-};
+var Promises = /*#__PURE__*/Object.freeze({
+__proto__: null,
+delay: delay,
+tick: tick,
+when: when
+});
 
 function resolve(name, base) {
   if (/^(\w+:)|\/\//i.test(name)) return name;
@@ -1259,11 +1687,7 @@ function resolve(name, base) {
   return "https://unpkg.com/" + name;
 }
 
-function requirer(resolve) {
-  return resolve == null ? require : requireFrom(resolve);
-}
-
-var svg = template(function(string) {
+const svg = template(function(string) {
   var root = document.createElementNS("http://www.w3.org/2000/svg", "g");
   root.innerHTML = string.trim();
   return root;
@@ -1287,7 +1711,7 @@ function style(href) {
 function tex(require) {
   return Promise.all([
     require(katex.resolve()),
-    style(katex.resolve("dist/katex.min.css"))
+    require.resolve(katex.resolve("dist/katex.min.css")).then(style)
   ]).then(function(values) {
     var katex = values[0], tex = renderer();
 
@@ -1324,32 +1748,660 @@ function width() {
   });
 }
 
-var Library = Object.assign(function Library(resolver) {
+function ascending(a, b) {
+  return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+function descending(a, b) {
+  return a == null || b == null ? NaN
+    : b < a ? -1
+    : b > a ? 1
+    : b >= a ? 0
+    : NaN;
+}
+
+function bisector(f) {
+  let compare1, compare2, delta;
+
+  // If an accessor is specified, promote it to a comparator. In this case we
+  // can test whether the search value is (self-) comparable. We can’t do this
+  // for a comparator (except for specific, known comparators) because we can’t
+  // tell if the comparator is symmetric, and an asymmetric comparator can’t be
+  // used to test whether a single value is comparable.
+  if (f.length !== 2) {
+    compare1 = ascending;
+    compare2 = (d, x) => ascending(f(d), x);
+    delta = (d, x) => f(d) - x;
+  } else {
+    compare1 = f === ascending || f === descending ? f : zero;
+    compare2 = f;
+    delta = f;
+  }
+
+  function left(a, x, lo = 0, hi = a.length) {
+    if (lo < hi) {
+      if (compare1(x, x) !== 0) return hi;
+      do {
+        const mid = (lo + hi) >>> 1;
+        if (compare2(a[mid], x) < 0) lo = mid + 1;
+        else hi = mid;
+      } while (lo < hi);
+    }
+    return lo;
+  }
+
+  function right(a, x, lo = 0, hi = a.length) {
+    if (lo < hi) {
+      if (compare1(x, x) !== 0) return hi;
+      do {
+        const mid = (lo + hi) >>> 1;
+        if (compare2(a[mid], x) <= 0) lo = mid + 1;
+        else hi = mid;
+      } while (lo < hi);
+    }
+    return lo;
+  }
+
+  function center(a, x, lo = 0, hi = a.length) {
+    const i = left(a, x, lo, hi - 1);
+    return i > lo && delta(a[i - 1], x) > -delta(a[i], x) ? i - 1 : i;
+  }
+
+  return {left, center, right};
+}
+
+function zero() {
+  return 0;
+}
+
+function number(x) {
+  return x === null ? NaN : +x;
+}
+
+bisector(ascending);
+bisector(number).center;
+
+function reverse(values) {
+  if (typeof values[Symbol.iterator] !== "function") throw new TypeError("values is not iterable");
+  return Array.from(values).reverse();
+}
+
+const nChecks = 20; // number of values to check in each array
+
+// We support two levels of DatabaseClient. The simplest DatabaseClient
+// implements only the client.sql tagged template literal. More advanced
+// DatabaseClients implement client.query and client.queryStream, which support
+// streaming and abort, and the client.queryTag tagged template literal is used
+// to translate the contents of a SQL cell or Table cell into the appropriate
+// arguments for calling client.query or client.queryStream. For table cells, we
+// additionally require client.describeColumns. The client.describeTables method
+// is optional.
+function isDatabaseClient(value, mode) {
+  return (
+    value &&
+    (typeof value.sql === "function" ||
+      (typeof value.queryTag === "function" &&
+        (typeof value.query === "function" ||
+          typeof value.queryStream === "function"))) &&
+    (mode !== "table" || typeof value.describeColumns === "function") &&
+    value !== __query // don’t match our internal helper
+  );
+}
+
+// Returns true if the value is a typed array (for a single-column table), or if
+// it’s an array. In the latter case, the elements of the array must be
+// consistently typed: either plain objects or primitives or dates.
+function isDataArray(value) {
+  return (
+    (Array.isArray(value) &&
+      (isQueryResultSetSchema(value.schema) ||
+        isQueryResultSetColumns(value.columns) ||
+        arrayContainsObjects(value) ||
+        arrayContainsPrimitives(value) ||
+        arrayContainsDates(value))) ||
+    isTypedArray(value)
+  );
+}
+
+// Given an array, checks that the given value is an array that does not contain
+// any primitive values (at least for the first few values that we check), and
+// that the first object contains enumerable keys (see computeSchema for how we
+// infer the columns). We assume that the contents of the table are homogenous,
+// but we don’t currently enforce this.
+// https://observablehq.com/@observablehq/database-client-specification#§1
+function arrayContainsObjects(value) {
+  const n = Math.min(nChecks, value.length);
+  for (let i = 0; i < n; ++i) {
+    const v = value[i];
+    if (v === null || typeof v !== "object") return false;
+  }
+  return n > 0 && objectHasEnumerableKeys(value[0]);
+}
+
+// Using a for-in loop here means that we can abort after finding at least one
+// enumerable key (whereas Object.keys would require materializing the array of
+// all keys, which would be considerably slower if the value has many keys!).
+// This function assumes that value is an object; see arrayContainsObjects.
+function objectHasEnumerableKeys(value) {
+  for (const _ in value) return true;
+  return false;
+}
+
+function isQueryResultSetSchema(schemas) {
+  return (Array.isArray(schemas) && schemas.every((s) => s && typeof s.name === "string"));
+}
+
+function isQueryResultSetColumns(columns) {
+  return (Array.isArray(columns) && columns.every((name) => typeof name === "string"));
+}
+
+// Returns true if the value represents an array of primitives (i.e., a
+// single-column table). This should only be passed values for which
+// isDataArray returns true.
+function arrayIsPrimitive(value) {
+  return (
+    isTypedArray(value) ||
+    arrayContainsPrimitives(value) ||
+    arrayContainsDates(value)
+  );
+}
+
+// Given an array, checks that the first n elements are primitives (number,
+// string, boolean, bigint) of a consistent type.
+function arrayContainsPrimitives(value) {
+  const n = Math.min(nChecks, value.length);
+  if (!(n > 0)) return false;
+  let type;
+  let hasPrimitive = false; // ensure we encounter 1+ primitives
+  for (let i = 0; i < n; ++i) {
+    const v = value[i];
+    if (v == null) continue; // ignore null and undefined
+    const t = typeof v;
+    if (type === undefined) {
+      switch (t) {
+        case "number":
+        case "boolean":
+        case "string":
+        case "bigint":
+          type = t;
+          break;
+        default:
+          return false;
+      }
+    } else if (t !== type) {
+      return false;
+    }
+    hasPrimitive = true;
+  }
+  return hasPrimitive;
+}
+
+// Given an array, checks that the first n elements are dates.
+function arrayContainsDates(value) {
+  const n = Math.min(nChecks, value.length);
+  if (!(n > 0)) return false;
+  let hasDate = false; // ensure we encounter 1+ dates
+  for (let i = 0; i < n; ++i) {
+    const v = value[i];
+    if (v == null) continue; // ignore null and undefined
+    if (!(v instanceof Date)) return false;
+    hasDate = true;
+  }
+  return hasDate;
+}
+
+function isTypedArray(value) {
+  return (
+    value instanceof Int8Array ||
+    value instanceof Int16Array ||
+    value instanceof Int32Array ||
+    value instanceof Uint8Array ||
+    value instanceof Uint8ClampedArray ||
+    value instanceof Uint16Array ||
+    value instanceof Uint32Array ||
+    value instanceof Float32Array ||
+    value instanceof Float64Array
+  );
+}
+
+// __query is used by table cells; __query.sql is used by SQL cells.
+const __query = Object.assign(
+  async (source, operations, invalidation) => {
+    source = await loadDataSource(await source, "table");
+    if (isDatabaseClient(source)) return evaluateQuery(source, makeQueryTemplate(operations, source), invalidation);
+    if (isDataArray(source)) return __table(source, operations);
+    if (!source) throw new Error("missing data source");
+    throw new Error("invalid data source");
+  },
+  {
+    sql(source, invalidation) {
+      return async function () {
+        return evaluateQuery(await loadDataSource(await source, "sql"), arguments, invalidation);
+      };
+    }
+  }
+);
+
+async function loadDataSource(source, mode) {
+  if (source instanceof FileAttachment) {
+    if (mode === "table") {
+      switch (source.mimeType) {
+        case "text/csv": return source.csv({typed: true});
+        case "text/tab-separated-values": return source.tsv({typed: true});
+        case "application/json": return source.json();
+      }
+    }
+    if (mode === "table" || mode === "sql") {
+      switch (source.mimeType) {
+        case "application/x-sqlite3": return source.sqlite();
+      }
+      if (/\.arrow$/i.test(source.name)) return DuckDBClient.of({__table: await source.arrow({version: 9})});
+    }
+    throw new Error(`unsupported file type: ${source.mimeType}`);
+  }
+  if ((mode === "table" || mode === "sql") && isArrowTable(source)) {
+    return DuckDBClient.of({__table: source});
+  }
+  return source;
+}
+
+async function evaluateQuery(source, args, invalidation) {
+  if (!source) throw new Error("missing data source");
+
+  // If this DatabaseClient supports abort and streaming, use that.
+  if (typeof source.queryTag === "function") {
+    const abortController = new AbortController();
+    const options = {signal: abortController.signal};
+    invalidation.then(() => abortController.abort("invalidated"));
+    if (typeof source.queryStream === "function") {
+      return accumulateQuery(
+        source.queryStream(...source.queryTag.apply(source, args), options)
+      );
+    }
+    if (typeof source.query === "function") {
+      return source.query(...source.queryTag.apply(source, args), options);
+    }
+  }
+
+  // Otherwise, fallback to the basic sql tagged template literal.
+  if (typeof source.sql === "function") {
+    return source.sql.apply(source, args);
+  }
+
+  // TODO: test if source is a file attachment, and support CSV etc.
+  throw new Error("source does not implement query, queryStream, or sql");
+}
+
+// Generator function that yields accumulated query results client.queryStream
+async function* accumulateQuery(queryRequest) {
+  let then = performance.now();
+  const queryResponse = await queryRequest;
+  const values = [];
+  values.done = false;
+  values.error = null;
+  values.schema = queryResponse.schema;
+  try {
+    for await (const rows of queryResponse.readRows()) {
+      if (performance.now() - then > 10 && values.length > 0) {
+        yield values;
+        then = performance.now();
+      }
+      for (const value of rows) {
+        values.push(value);
+      }
+    }
+    values.done = true;
+    yield values;
+  } catch (error) {
+    values.error = error;
+    yield values;
+  }
+}
+
+/**
+ * Returns a SQL query in the form [[parts], ...params] where parts is an array
+ * of sub-strings and params are the parameter values to be inserted between each
+ * sub-string.
+ */
+function makeQueryTemplate(operations, source) {
+  const escaper =
+    typeof source.escape === "function" ? source.escape : (i) => i;
+  const {select, from, filter, sort, slice} = operations;
+  if (!from.table)
+    throw new Error("missing from table");
+  if (select.columns && select.columns.length === 0)
+    throw new Error("at least one column must be selected");
+  const columns = select.columns ? select.columns.map((c) => `t.${escaper(c)}`) : "*";
+  const args = [
+    [`SELECT ${columns} FROM ${formatTable(from.table, escaper)} t`]
+  ];
+  for (let i = 0; i < filter.length; ++i) {
+    appendSql(i ? `\nAND ` : `\nWHERE `, args);
+    appendWhereEntry(filter[i], args, escaper);
+  }
+  for (let i = 0; i < sort.length; ++i) {
+    appendSql(i ? `, ` : `\nORDER BY `, args);
+    appendOrderBy(sort[i], args, escaper);
+  }
+  if (source.dialect === "mssql") {
+    if (slice.to !== null || slice.from !== null) {
+      if (!sort.length) {
+        if (!select.columns)
+          throw new Error(
+              "at least one column must be explicitly specified. Received '*'."
+          );
+        appendSql(`\nORDER BY `, args);
+        appendOrderBy(
+          {column: select.columns[0], direction: "ASC"},
+          args,
+          escaper
+        );
+      }
+      appendSql(`\nOFFSET ${slice.from || 0} ROWS`, args);
+      appendSql(
+        `\nFETCH NEXT ${
+          slice.to !== null ? slice.to - (slice.from || 0) : 1e9
+        } ROWS ONLY`,
+        args
+      );
+    }
+  } else {
+    if (slice.to !== null || slice.from !== null) {
+      appendSql(
+        `\nLIMIT ${slice.to !== null ? slice.to - (slice.from || 0) : 1e9}`,
+        args
+      );
+    }
+    if (slice.from !== null) {
+      appendSql(` OFFSET ${slice.from}`, args);
+    }
+  }
+  return args;
+}
+
+function formatTable(table, escaper) {
+  if (typeof table === "object") { // i.e., not a bare string specifier
+    let from = "";
+    if (table.database != null) from += escaper(table.database) + ".";
+    if (table.schema != null) from += escaper(table.schema) + ".";
+    from += escaper(table.table);
+    return from;
+  }
+  return table;
+}
+
+function appendSql(sql, args) {
+  const strings = args[0];
+  strings[strings.length - 1] += sql;
+}
+
+function appendOrderBy({column, direction}, args, escaper) {
+  appendSql(`t.${escaper(column)} ${direction.toUpperCase()}`, args);
+}
+
+function appendWhereEntry({type, operands}, args, escaper) {
+  if (operands.length < 1) throw new Error("Invalid operand length");
+
+  // Unary operations
+  if (operands.length === 1) {
+    appendOperand(operands[0], args, escaper);
+    switch (type) {
+      case "n":
+        appendSql(` IS NULL`, args);
+        return;
+      case "nn":
+        appendSql(` IS NOT NULL`, args);
+        return;
+      default:
+        throw new Error("Invalid filter operation");
+    }
+  }
+
+  // Binary operations
+  if (operands.length === 2) {
+    if (["in", "nin"].includes(type)) ; else if (["c", "nc"].includes(type)) {
+      // TODO: Case (in)sensitive?
+      appendOperand(operands[0], args, escaper);
+      switch (type) {
+        case "c":
+          appendSql(` LIKE `, args);
+          break;
+        case "nc":
+          appendSql(` NOT LIKE `, args);
+          break;
+      }
+      appendOperand(likeOperand(operands[1]), args, escaper);
+      return;
+    } else {
+      appendOperand(operands[0], args, escaper);
+      switch (type) {
+        case "eq":
+          appendSql(` = `, args);
+          break;
+        case "ne":
+          appendSql(` <> `, args);
+          break;
+        case "gt":
+          appendSql(` > `, args);
+          break;
+        case "lt":
+          appendSql(` < `, args);
+          break;
+        case "gte":
+          appendSql(` >= `, args);
+          break;
+        case "lte":
+          appendSql(` <= `, args);
+          break;
+        default:
+          throw new Error("Invalid filter operation");
+      }
+      appendOperand(operands[1], args, escaper);
+      return;
+    }
+  }
+
+  // List operations
+  appendOperand(operands[0], args, escaper);
+  switch (type) {
+    case "in":
+      appendSql(` IN (`, args);
+      break;
+    case "nin":
+      appendSql(` NOT IN (`, args);
+      break;
+    default:
+      throw new Error("Invalid filter operation");
+  }
+  appendListOperands(operands.slice(1), args);
+  appendSql(")", args);
+}
+
+function appendOperand(o, args, escaper) {
+  if (o.type === "column") {
+    appendSql(`t.${escaper(o.value)}`, args);
+  } else {
+    args.push(o.value);
+    args[0].push("");
+  }
+}
+
+// TODO: Support column operands here?
+function appendListOperands(ops, args) {
+  let first = true;
+  for (const op of ops) {
+    if (first) first = false;
+    else appendSql(",", args);
+    args.push(op.value);
+    args[0].push("");
+  }
+}
+
+function likeOperand(operand) {
+  return {...operand, value: `%${operand.value}%`};
+}
+
+// This function applies table cell operations to an in-memory table (array of
+// objects); it should be equivalent to the corresponding SQL query.
+function __table(source, operations) {
+  const input = source;
+  let {schema, columns} = source;
+  let primitive = arrayIsPrimitive(source);
+  if (primitive) source = Array.from(source, (value) => ({value}));
+  for (const {type, operands} of operations.filter) {
+    const [{value: column}] = operands;
+    const values = operands.slice(1).map(({value}) => value);
+    switch (type) {
+      case "eq": {
+        const [value] = values;
+        if (value instanceof Date) {
+          const time = +value; // compare as primitive
+          source = source.filter((d) => +d[column] === time);
+        } else {
+          source = source.filter((d) => d[column] === value);
+        }
+        break;
+      }
+      case "ne": {
+        const [value] = values;
+        source = source.filter((d) => d[column] !== value);
+        break;
+      }
+      case "c": {
+        const [value] = values;
+        source = source.filter(
+          (d) => typeof d[column] === "string" && d[column].includes(value)
+        );
+        break;
+      }
+      case "nc": {
+        const [value] = values;
+        source = source.filter(
+          (d) => typeof d[column] === "string" && !d[column].includes(value)
+        );
+        break;
+      }
+      case "in": {
+        const set = new Set(values); // TODO support dates?
+        source = source.filter((d) => set.has(d[column]));
+        break;
+      }
+      case "nin": {
+        const set = new Set(values); // TODO support dates?
+        source = source.filter((d) => !set.has(d[column]));
+        break;
+      }
+      case "n": {
+        source = source.filter((d) => d[column] == null);
+        break;
+      }
+      case "nn": {
+        source = source.filter((d) => d[column] != null);
+        break;
+      }
+      case "lt": {
+        const [value] = values;
+        source = source.filter((d) => d[column] < value);
+        break;
+      }
+      case "lte": {
+        const [value] = values;
+        source = source.filter((d) => d[column] <= value);
+        break;
+      }
+      case "gt": {
+        const [value] = values;
+        source = source.filter((d) => d[column] > value);
+        break;
+      }
+      case "gte": {
+        const [value] = values;
+        source = source.filter((d) => d[column] >= value);
+        break;
+      }
+      default:
+        throw new Error(`unknown filter type: ${type}`);
+    }
+  }
+  for (const {column, direction} of reverse(operations.sort)) {
+    const compare = direction === "desc" ? descending : ascending;
+    if (source === input) source = source.slice(); // defensive copy
+    source.sort((a, b) => compare(a[column], b[column]));
+  }
+  let {from, to} = operations.slice;
+  from = from == null ? 0 : Math.max(0, from);
+  to = to == null ? Infinity : Math.max(0, to);
+  if (from > 0 || to < Infinity) {
+    source = source.slice(Math.max(0, from), Math.max(0, to));
+  }
+  if (operations.select.columns) {
+    if (schema) {
+      const schemaByName = new Map(schema.map((s) => [s.name, s]));
+      schema = operations.select.columns.map((c) => schemaByName.get(c));
+    }
+    if (columns) {
+      columns = operations.select.columns;
+    }
+    source = source.map((d) =>
+      Object.fromEntries(operations.select.columns.map((c) => [c, d[c]]))
+    );
+  }
+  if (primitive) source = source.map((d) => d.value);
+  if (source !== input) {
+    if (schema) source.schema = schema;
+    if (columns) source.columns = columns;
+  }
+  return source;
+}
+
+const Library = Object.assign(Object.defineProperties(function Library(resolver) {
   const require = requirer(resolver);
   Object.defineProperties(this, properties({
     FileAttachment: () => NoFileAttachments,
-    Arrow: () => require(arrow.resolve()),
-    Inputs: () => require(inputs.resolve()).then(Inputs => ({...Inputs, file: Inputs.fileOf(AbstractFile)})),
     Mutable: () => Mutable,
-    Plot: () => require(plot.resolve()),
-    SQLite: () => sqlite(require),
-    SQLiteDatabaseClient: () => SQLiteDatabaseClient,
-    _: () => require(lodash.resolve()),
-    aq: () => require.alias({"apache-arrow": arrow.resolve()})(arquero.resolve()),
-    d3: () => require(d3.resolve()),
+    now,
+    width,
+
+    // Tagged template literals
     dot: () => require(graphviz.resolve()),
     htl: () => require(htl.resolve()),
     html: () => html$1,
     md: () => md(require),
-    mermaid: () => mermaid(require),
-    now,
-    require: () => require,
-    resolve: () => resolve,
     svg: () => svg,
     tex: () => tex(require),
+
+    // Recommended libraries
+    // https://observablehq.com/@observablehq/recommended-libraries
+    _: () => require(lodash.resolve()),
+    aq: () => require.alias({"apache-arrow": arrow4.resolve()})(arquero.resolve()), // TODO upgrade to apache-arrow@9
+    Arrow: () => require(arrow4.resolve()), // TODO upgrade to apache-arrow@9
+    d3: () => require(d3.resolve()),
+    DuckDBClient: () => DuckDBClient,
+    Inputs: () => require(inputs.resolve()).then(Inputs => ({...Inputs, file: Inputs.fileOf(AbstractFile)})),
+    L: () => leaflet(require),
+    mermaid: () => mermaid(require),
+    Plot: () => require(plot.resolve()),
+    __query: () => __query,
+    require: () => require,
+    resolve: () => resolve, // deprecated; use async require.resolve instead
+    SQLite: () => SQLite(require),
+    SQLiteDatabaseClient: () => SQLiteDatabaseClient,
     topojson: () => require(topojson.resolve()),
     vl: () => vl(require),
-    width,
+
+    // Sample datasets
+    // https://observablehq.com/@observablehq/datasets
+    aapl: () => new FileAttachment("https://static.observableusercontent.com/files/3ccff97fd2d93da734e76829b2b066eafdaac6a1fafdec0faf6ebc443271cfc109d29e80dd217468fcb2aff1e6bffdc73f356cc48feb657f35378e6abbbb63b9").csv({typed: true}),
+    alphabet: () => new FileAttachment("https://static.observableusercontent.com/files/75d52e6c3130b1cae83cda89305e17b50f33e7420ef205587a135e8562bcfd22e483cf4fa2fb5df6dff66f9c5d19740be1cfaf47406286e2eb6574b49ffc685d").csv({typed: true}),
+    cars: () => new FileAttachment("https://static.observableusercontent.com/files/048ec3dfd528110c0665dfa363dd28bc516ffb7247231f3ab25005036717f5c4c232a5efc7bb74bc03037155cb72b1abe85a33d86eb9f1a336196030443be4f6").csv({typed: true}),
+    citywages: () => new FileAttachment("https://static.observableusercontent.com/files/39837ec5121fcc163131dbc2fe8c1a2e0b3423a5d1e96b5ce371e2ac2e20a290d78b71a4fb08b9fa6a0107776e17fb78af313b8ea70f4cc6648fad68ddf06f7a").csv({typed: true}),
+    diamonds: () => new FileAttachment("https://static.observableusercontent.com/files/87942b1f5d061a21fa4bb8f2162db44e3ef0f7391301f867ab5ba718b225a63091af20675f0bfe7f922db097b217b377135203a7eab34651e21a8d09f4e37252").csv({typed: true}),
+    flare: () => new FileAttachment("https://static.observableusercontent.com/files/a6b0d94a7f5828fd133765a934f4c9746d2010e2f342d335923991f31b14120de96b5cb4f160d509d8dc627f0107d7f5b5070d2516f01e4c862b5b4867533000").csv({typed: true}),
+    industries: () => new FileAttachment("https://static.observableusercontent.com/files/76f13741128340cc88798c0a0b7fa5a2df8370f57554000774ab8ee9ae785ffa2903010cad670d4939af3e9c17e5e18e7e05ed2b38b848ac2fc1a0066aa0005f").csv({typed: true}),
+    miserables: () => new FileAttachment("https://static.observableusercontent.com/files/31d904f6e21d42d4963ece9c8cc4fbd75efcbdc404bf511bc79906f0a1be68b5a01e935f65123670ed04e35ca8cae3c2b943f82bf8db49c5a67c85cbb58db052").json(),
+    olympians: () => new FileAttachment("https://static.observableusercontent.com/files/31ca24545a0603dce099d10ee89ee5ae72d29fa55e8fc7c9ffb5ded87ac83060d80f1d9e21f4ae8eb04c1e8940b7287d179fe8060d887fb1f055f430e210007c").csv({typed: true}),
+    penguins: () => new FileAttachment("https://static.observableusercontent.com/files/715db1223e067f00500780077febc6cebbdd90c151d3d78317c802732252052ab0e367039872ab9c77d6ef99e5f55a0724b35ddc898a1c99cb14c31a379af80a").csv({typed: true}),
+    weather: () => new FileAttachment("https://static.observableusercontent.com/files/693a46b22b33db0f042728700e0c73e836fa13d55446df89120682d55339c6db7cc9e574d3d73f24ecc9bc7eb9ac9a1e7e104a1ee52c00aab1e77eb102913c1f").csv({typed: true}),
 
     // Note: these are namespace objects, and thus exposed directly rather than
     // being wrapped in a function. This allows library.Generators to resolve,
@@ -1359,11 +2411,25 @@ var Library = Object.assign(function Library(resolver) {
     Generators: Generators$1,
     Promises
   }));
-}, {resolve: require.resolve});
+}, {
+  resolve: {
+    get: () => requireDefault.resolve,
+    enumerable: true,
+    configurable: true
+  },
+  require: {
+    get: () => requireDefault,
+    set: setDefaultRequire,
+    enumerable: true,
+    configurable: true
+  }
+}), {
+  resolveFrom,
+  requireFrom
+});
 
 function properties(values) {
-  return fromEntries(Object.entries(values).map(property));
-  // return Object.fromEntries(Object.entries(values).map(property));
+  return Object.fromEntries(Object.entries(values).map(property));
 }
 
 function property([key, value]) {
@@ -1452,7 +2518,9 @@ class PandocCodeDecorator {
     const startIndex = startEntry.index;
     const endIndex = endEntry && endEntry.index || this._elementEntryPoints.length;
     for (let i = startIndex; i < endIndex; ++i) {
-      yield this._elementEntryPoints[i];
+      if (this._elementEntryPoints[i] !== void 0) {
+        yield this._elementEntryPoints[i];
+      }
     }
   }
   decorateSpan(start, end, classes) {
@@ -1489,11 +2557,11 @@ class PandocCodeDecorator {
       this._elementEntryPoints.sort((a, b) => a.offset - b.offset);
     };
     const startEntry = this.locateEntry(start);
-    if (startEntry !== void 0 && startEntry.entry.offset != start) {
+    if (startEntry !== void 0 && startEntry.entry !== void 0 && startEntry.entry.offset != start) {
       splitEntry(startEntry.entry, start);
     }
     const endEntry = this.locateEntry(end);
-    if (endEntry !== void 0 && endEntry.entry.offset !== end) {
+    if (endEntry !== void 0 && startEntry.entry !== void 0 && endEntry.entry.offset !== end) {
       splitEntry(endEntry.entry, end);
     }
   }
@@ -2303,14 +3371,14 @@ function isnode(value) {
       && (value instanceof value.constructor);
 }
 
-function RuntimeError(message, input) {
-  this.message = message + "";
-  this.input = input;
+class RuntimeError extends Error {
+  constructor(message, input) {
+    super(message);
+    this.input = input;
+  }
 }
 
-RuntimeError.prototype = Object.create(Error.prototype);
 RuntimeError.prototype.name = "RuntimeError";
-RuntimeError.prototype.constructor = RuntimeError;
 
 function generatorish(value) {
   return value
@@ -2348,33 +3416,30 @@ function load(notebook, library, observer) {
   return runtime;
 }
 
-var prototype = Array.prototype;
-var map = prototype.map;
-var forEach = prototype.forEach;
-
 function constant(x) {
-  return function() {
-    return x;
-  };
+  return () => x;
 }
 
 function identity$1(x) {
   return x;
 }
 
-function rethrow(e) {
-  return function() {
-    throw e;
+function rethrow(error) {
+  return () => {
+    throw error;
   };
 }
 
+const prototype = Array.prototype;
+const map = prototype.map;
+
 function noop() {}
 
-var TYPE_NORMAL = 1; // a normal variable
-var TYPE_IMPLICIT = 2; // created on reference
-var TYPE_DUPLICATE = 3; // created on duplicate definition
+const TYPE_NORMAL = 1; // a normal variable
+const TYPE_IMPLICIT = 2; // created on reference
+const TYPE_DUPLICATE = 3; // created on duplicate definition
 
-var no_observer = {};
+const no_observer = Symbol("no-observer");
 
 function Variable(type, module, observer) {
   if (!observer) observer = no_observer;
@@ -2421,17 +3486,22 @@ function variable_undefined() {
   throw variable_undefined;
 }
 
+function variable_stale() {
+  throw variable_stale;
+}
+
 function variable_rejector(variable) {
-  return function(error) {
-    if (error === variable_undefined) throw new RuntimeError(variable._name + " is not defined", variable._name);
+  return (error) => {
+    if (error === variable_stale) throw error;
+    if (error === variable_undefined) throw new RuntimeError(`${variable._name} is not defined`, variable._name);
     if (error instanceof Error && error.message) throw new RuntimeError(error.message, variable._name);
-    throw new RuntimeError(variable._name + " could not be resolved", variable._name);
+    throw new RuntimeError(`${variable._name} could not be resolved`, variable._name);
   };
 }
 
 function variable_duplicate(name) {
-  return function() {
-    throw new RuntimeError(name + " is defined more than once");
+  return () => {
+    throw new RuntimeError(`${name} is defined more than once`);
   };
 }
 
@@ -2449,14 +3519,14 @@ function variable_define(name, inputs, definition) {
     }
   }
   return variable_defineImpl.call(this,
-    name == null ? null : name + "",
+    name == null ? null : String(name),
     inputs == null ? [] : map.call(inputs, this._module._resolve, this._module),
     typeof definition === "function" ? definition : constant(definition)
   );
 }
 
 function variable_defineImpl(name, inputs, definition) {
-  var scope = this._module._scope, runtime = this._module._runtime;
+  const scope = this._module._scope, runtime = this._module._runtime;
 
   this._inputs.forEach(variable_detach, this);
   inputs.forEach(variable_attach, this);
@@ -2470,7 +3540,7 @@ function variable_defineImpl(name, inputs, definition) {
 
   // Did the variable’s name change? Time to patch references!
   if (name !== this._name || scope.get(name) !== this) {
-    var error, found;
+    let error, found;
 
     if (this._name) { // Did this variable previously have a name?
       if (this._outputs.size) { // And did other variables reference this variable?
@@ -2533,6 +3603,11 @@ function variable_defineImpl(name, inputs, definition) {
     this._name = name;
   }
 
+  // If this redefined variable was previously evaluated, invalidate it. (If the
+  // variable was never evaluated, then the invalidated value could never have
+  // been exposed and we can avoid this extra work.)
+  if (this._version > 0) ++this._version;
+
   runtime._updates.add(this);
   runtime._compute();
   return this;
@@ -2540,7 +3615,7 @@ function variable_defineImpl(name, inputs, definition) {
 
 function variable_import(remote, name, module) {
   if (arguments.length < 3) module = name, name = remote;
-  return variable_defineImpl.call(this, name + "", [module._resolve(remote + "")], identity$1);
+  return variable_defineImpl.call(this, String(name), [module._resolve(String(remote))], identity$1);
 }
 
 function variable_delete() {
@@ -2559,11 +3634,16 @@ function variable_rejected(error) {
   if (this._observer.rejected) this._observer.rejected(error, this._name);
 }
 
+const variable_variable = Symbol("variable");
+const variable_invalidation = Symbol("invalidation");
+const variable_visibility = Symbol("visibility");
+
 function Module(runtime, builtins = []) {
   Object.defineProperties(this, {
     _runtime: {value: runtime},
     _scope: {value: new Map},
     _builtins: {value: new Map([
+      ["@variable", variable_variable],
       ["invalidation", variable_invalidation],
       ["visibility", variable_visibility],
       ...builtins
@@ -2573,7 +3653,6 @@ function Module(runtime, builtins = []) {
 }
 
 Object.defineProperties(Module.prototype, {
-  _copy: {value: module_copy, writable: true, configurable: true},
   _resolve: {value: module_resolve, writable: true, configurable: true},
   redefine: {value: module_redefine, writable: true, configurable: true},
   define: {value: module_define, writable: true, configurable: true},
@@ -2585,19 +3664,19 @@ Object.defineProperties(Module.prototype, {
 });
 
 function module_redefine(name) {
-  var v = this._scope.get(name);
-  if (!v) throw new RuntimeError(name + " is not defined");
-  if (v._type === TYPE_DUPLICATE) throw new RuntimeError(name + " is defined more than once");
+  const v = this._scope.get(name);
+  if (!v) throw new RuntimeError(`${name} is not defined`);
+  if (v._type === TYPE_DUPLICATE) throw new RuntimeError(`${name} is defined more than once`);
   return v.define.apply(v, arguments);
 }
 
 function module_define() {
-  var v = new Variable(TYPE_NORMAL, this);
+  const v = new Variable(TYPE_NORMAL, this);
   return v.define.apply(v, arguments);
 }
 
 function module_import() {
-  var v = new Variable(TYPE_NORMAL, this);
+  const v = new Variable(TYPE_NORMAL, this);
   return v.import.apply(v, arguments);
 }
 
@@ -2606,66 +3685,92 @@ function module_variable(observer) {
 }
 
 async function module_value(name) {
-  var v = this._scope.get(name);
-  if (!v) throw new RuntimeError(name + " is not defined");
+  let v = this._scope.get(name);
+  if (!v) throw new RuntimeError(`${name} is not defined`);
   if (v._observer === no_observer) {
-    v._observer = true;
-    this._runtime._dirty.add(v);
+    v = this.variable(true).define([name], identity$1);
+    try {
+      return await module_revalue(this._runtime, v);
+    } finally {
+      v.delete();
+    }
+  } else {
+    return module_revalue(this._runtime, v);
   }
-  await this._runtime._compute();
-  return v._promise;
+}
+
+// If the variable is redefined before its value resolves, try again.
+async function module_revalue(runtime, variable) {
+  await runtime._compute();
+  try {
+    return await variable._promise;
+  } catch (error) {
+    if (error === variable_stale) return module_revalue(runtime, variable);
+    throw error;
+  }
 }
 
 function module_derive(injects, injectModule) {
-  var copy = new Module(this._runtime, this._builtins);
-  copy._source = this;
-  forEach.call(injects, function(inject) {
-    if (typeof inject !== "object") inject = {name: inject + ""};
-    if (inject.alias == null) inject.alias = inject.name;
-    copy.import(inject.name, inject.alias, injectModule);
-  });
-  Promise.resolve().then(() => {
-    const modules = new Set([this]);
-    for (const module of modules) {
-      for (const variable of module._scope.values()) {
-        if (variable._definition === identity$1) { // import
-          const module = variable._inputs[0]._module;
-          const source = module._source || module;
-          if (source === this) { // circular import-with!
-            console.warn("circular module definition; ignoring"); // eslint-disable-line no-console
-            return;
-          }
-          modules.add(source);
-        }
+  const map = new Map();
+  const modules = new Set();
+  const copies = [];
+
+  // Given a module, derives an alias of that module with an initially-empty
+  // definition. The variables will be copied later in a second pass below.
+  function alias(source) {
+    let target = map.get(source);
+    if (target) return target;
+    target = new Module(source._runtime, source._builtins);
+    target._source = source;
+    map.set(source, target);
+    copies.push([target, source]);
+    modules.add(source);
+    return target;
+  }
+
+  // Inject the given variables as reverse imports into the derived module.
+  const derive = alias(this);
+  for (const inject of injects) {
+    const {alias, name} = typeof inject === "object" ? inject : {name: inject};
+    derive.import(name, alias == null ? name : alias, injectModule);
+  }
+
+  // Iterate over all the variables (currently) in this module. If any
+  // represents an import-with (i.e., an import of a module with a _source), the
+  // transitive import-with must be copied, too, as direct injections may affect
+  // transitive injections. Note that an import-with can only be created with
+  // module.derive and hence it’s not possible for an import-with to be added
+  // later; therefore we only need to apply this check once, now.
+  for (const module of modules) {
+    for (const [name, variable] of module._scope) {
+      if (variable._definition === identity$1) { // import
+        if (module === this && derive._scope.has(name)) continue; // overridden by injection
+        const importedModule = variable._inputs[0]._module;
+        if (importedModule._source) alias(importedModule);
       }
     }
-    this._copy(copy, new Map);
-  });
-  return copy;
-}
+  }
 
-function module_copy(copy, map) {
-  copy._source = this;
-  map.set(this, copy);
-  for (const [name, source] of this._scope) {
-    var target = copy._scope.get(name);
-    if (target && target._type === TYPE_NORMAL) continue; // injection
-    if (source._definition === identity$1) { // import
-      var sourceInput = source._inputs[0],
-          sourceModule = sourceInput._module;
-      copy.import(sourceInput._name, name, map.get(sourceModule)
-        || (sourceModule._source
-           ? sourceModule._copy(new Module(copy._runtime, copy._builtins), map) // import-with
-           : sourceModule));
-    } else {
-      copy.define(name, source._inputs.map(variable_name), source._definition);
+  // Finally, with the modules resolved, copy the variable definitions.
+  for (const [target, source] of copies) {
+    for (const [name, sourceVariable] of source._scope) {
+      const targetVariable = target._scope.get(name);
+      if (targetVariable && targetVariable._type !== TYPE_IMPLICIT) continue; // preserve injection
+      if (sourceVariable._definition === identity$1) { // import
+        const sourceInput = sourceVariable._inputs[0];
+        const sourceModule = sourceInput._module;
+        target.import(sourceInput._name, name, map.get(sourceModule) || sourceModule);
+      } else { // non-import
+        target.define(name, sourceVariable._inputs.map(variable_name), sourceVariable._definition);
+      }
     }
   }
-  return copy;
+
+  return derive;
 }
 
 function module_resolve(name) {
-  var variable = this._scope.get(name), value;
+  let variable = this._scope.get(name), value;
   if (!variable) {
     variable = new Variable(TYPE_IMPLICIT, this);
     if (this._builtins.has(name)) {
@@ -2700,11 +3805,8 @@ const frame = typeof requestAnimationFrame === "function" ? requestAnimationFram
   : typeof setImmediate === "function" ? setImmediate
   : f => setTimeout(f, 0);
 
-var variable_invalidation = {};
-var variable_visibility = {};
-
 function Runtime(builtins = new Library, global = window_global) {
-  var builtin = this.module();
+  const builtin = this.module();
   Object.defineProperties(this, {
     _dirty: {value: new Set},
     _updates: {value: new Set},
@@ -2717,14 +3819,10 @@ function Runtime(builtins = new Library, global = window_global) {
     _builtin: {value: builtin},
     _global: {value: global}
   });
-  if (builtins) for (var name in builtins) {
+  if (builtins) for (const name in builtins) {
     (new Variable(TYPE_IMPLICIT, builtin)).define(name, [], builtins[name]);
   }
 }
-
-Object.defineProperties(Runtime, {
-  load: {value: load, writable: true, configurable: true}
-});
 
 Object.defineProperties(Runtime.prototype, {
   _precompute: {value: runtime_precompute, writable: true, configurable: true},
@@ -2733,7 +3831,8 @@ Object.defineProperties(Runtime.prototype, {
   _computeNow: {value: runtime_computeNow, writable: true, configurable: true},
   dispose: {value: runtime_dispose, writable: true, configurable: true},
   module: {value: runtime_module, writable: true, configurable: true},
-  fileAttachments: {value: FileAttachments, writable: true, configurable: true}
+  fileAttachments: {value: FileAttachments, writable: true, configurable: true},
+  load: {value: load, writable: true, configurable: true}
 });
 
 function runtime_dispose() {
@@ -2780,7 +3879,7 @@ function runtime_computeSoon() {
 }
 
 async function runtime_computeNow() {
-  var queue = [],
+  let queue = [],
       variables,
       variable,
       precomputes = this._precomputes;
@@ -2933,10 +4032,10 @@ function variable_compute(variable) {
 
   // Compute the initial value of the variable.
   function define(inputs) {
-    if (variable._version !== version) return;
+    if (variable._version !== version) throw variable_stale;
 
     // Replace any reference to invalidation with the promise, lazily.
-    for (var i = 0, n = inputs.length; i < n; ++i) {
+    for (let i = 0, n = inputs.length; i < n; ++i) {
       switch (inputs[i]) {
         case variable_invalidation: {
           inputs[i] = invalidation = variable_invalidator(variable);
@@ -2945,6 +4044,10 @@ function variable_compute(variable) {
         case variable_visibility: {
           if (!invalidation) invalidation = variable_invalidator(variable);
           inputs[i] = variable_intersector(invalidation, variable);
+          break;
+        }
+        case variable_variable: {
+          inputs[i] = variable;
           break;
         }
       }
@@ -2958,8 +4061,8 @@ function variable_compute(variable) {
   // already have been invalidated here, in which case we need to terminate the
   // generator immediately!
   function generate(value) {
+    if (variable._version !== version) throw variable_stale;
     if (generatorish(value)) {
-      if (variable._version !== version) return void value.return();
       (invalidation || variable_invalidator(variable)).then(variable_return(value));
       return variable_generate(variable, version, value);
     }
@@ -2967,11 +4070,10 @@ function variable_compute(variable) {
   }
 
   promise.then((value) => {
-    if (variable._version !== version) return;
     variable._value = value;
     variable._fulfilled(value);
   }, (error) => {
-    if (variable._version !== version) return;
+    if (error === variable_stale) return;
     variable._value = undefined;
     variable._rejected(error);
   });
@@ -2996,14 +4098,14 @@ function variable_generate(variable, version, generator) {
   // successful, reject the variable, compute downstream variables, and return.
   function recompute() {
     const promise = compute((value) => {
-      if (variable._version !== version) return;
+      if (variable._version !== version) throw variable_stale;
       currentValue = value;
       postcompute(value, promise).then(() => runtime._precompute(recompute));
       variable._fulfilled(value);
       return value;
     });
     promise.catch((error) => {
-      if (variable._version !== version) return;
+      if (error === variable_stale || variable._version !== version) return;
       postcompute(undefined, promise);
       variable._rejected(error);
     });
@@ -3021,7 +4123,7 @@ function variable_generate(variable, version, generator) {
   // When retrieving the first value from the generator, the promise graph is
   // already established, so we only need to queue the next pull.
   return compute((value) => {
-    if (variable._version !== version) return;
+    if (variable._version !== version) throw variable_stale;
     currentValue = value;
     runtime._precompute(recompute);
     return value;
@@ -3047,7 +4149,7 @@ function variable_return(generator) {
 
 function variable_reachable(variable) {
   if (variable._observer !== no_observer) return true; // Directly reachable.
-  var outputs = new Set(variable._outputs);
+  const outputs = new Set(variable._outputs);
   for (const output of outputs) {
     if (output._observer !== no_observer) return true;
     output._outputs.forEach(outputs.add, outputs);
@@ -3056,7 +4158,7 @@ function variable_reachable(variable) {
 }
 
 function window_global(name) {
-  return window[name];
+  return globalThis[name];
 }
 
 function renderHtml(string) {
@@ -9276,7 +10378,7 @@ var dist = {exports: {}};
 	// An ancestor walk keeps an array of ancestor nodes (including the
 	// current node) and passes them to the callback as third parameter
 	// (and also as state parameter when no other state is present).
-	function ancestor(node, visitors, baseVisitor, state) {
+	function ancestor(node, visitors, baseVisitor, state, override) {
 	  var ancestors = [];
 	  if (!baseVisitor) { baseVisitor = base
 	  ; }(function c(node, st, override) {
@@ -9286,7 +10388,7 @@ var dist = {exports: {}};
 	    baseVisitor[type](node, st, c);
 	    if (found) { found(node, st || ancestors, ancestors); }
 	    if (isNew) { ancestors.pop(); }
-	  })(node, state);
+	  })(node, state, override);
 	}
 
 	// A full walk triggers the callback on each node
@@ -9331,7 +10433,7 @@ var dist = {exports: {}};
 	};
 	base.Statement = skipThrough;
 	base.EmptyStatement = ignore;
-	base.ExpressionStatement = base.ParenthesizedExpression =
+	base.ExpressionStatement = base.ParenthesizedExpression = base.ChainExpression =
 	  function (node, st, c) { return c(node.expression, st, "Expression"); };
 	base.IfStatement = function (node, st, c) {
 	  c(node.test, st, "Expression");
@@ -9536,6 +10638,8 @@ var dist = {exports: {}};
 	  if (node.source) { c(node.source, st, "Expression"); }
 	};
 	base.ExportAllDeclaration = function (node, st, c) {
+	  if (node.exported)
+	    { c(node.exported, st); }
 	  c(node.source, st, "Expression");
 	};
 	base.ImportDeclaration = function (node, st, c) {
@@ -10445,7 +11549,7 @@ var dist = {exports: {}};
 
 	  if (!mapValue) return "";
 	  return `  const fileAttachments = new Map(${mapValue});
-	  main.builtin("FileAttachment", runtime.fileAttachments(name => fileAttachments.get(name)));`;
+  main.builtin("FileAttachment", runtime.fileAttachments(name => fileAttachments.get(name)));`;
 	}
 
 	function ESMVariables(moduleObject, importMap, params) {
@@ -10471,12 +11575,12 @@ var dist = {exports: {}};
 	        if (defineImportMarkdown)
 	          src +=
 	            `  main.variable(observer()).define(
-	    null,
-	    ["md"],
-	    md => md\`~~~javascript
-	${importString}
-	~~~\`
-	  );` + "\n";
+    null,
+    ["md"],
+    md => md\`~~~javascript
+${importString}
+~~~\`
+  );` + "\n";
 
 	        // name imported notebook define functions
 	        const childName = `child${++childJ}`;
@@ -10485,7 +11589,7 @@ var dist = {exports: {}};
 	        })${
 	          hasInjections ? `.derive(${JSON.stringify(injections)}, main)` : ""
 	        };
-	${specifiers
+${specifiers
 	  .map(
 	    specifier =>
 	      `  main.import("${specifier.name}", "${specifier.alias}", ${childName});`
@@ -10504,8 +11608,8 @@ var dist = {exports: {}};
 	        let code = "";
 	        if (cell.body.type !== "BlockStatement")
 	          code = `{return(
-	${bodyText}
-	)}`;
+${bodyText}
+)}`;
 	        else code = "\n" + bodyText + "\n";
 	        const cellReferencesString = cellReferences.length
 	          ? JSON.stringify(cellReferences) + ", "
@@ -10522,15 +11626,15 @@ var dist = {exports: {}};
 	        if (cell.id && cell.id.type === "ViewExpression") {
 	          const reference = `"viewof ${cellName}"`;
 	          src += `  main.variable(observer(${reference})).define(${reference}, ${cellReferencesString}${cellFunction});
-	  main.variable(${
+  main.variable(${
 	    observeViewofValues ? `observer("${cellName}")` : `null`
 	  }).define("${cellName}", ["Generators", ${reference}], (G, _) => G.input(_));`;
 	        } else if (cell.id && cell.id.type === "MutableExpression") {
 	          const initialName = `"initial ${cellName}"`;
 	          const mutableName = `"mutable ${cellName}"`;
 	          src += `  main.define(${initialName}, ${cellReferencesString}${cellFunction});
-	  main.variable(observer(${mutableName})).define(${mutableName}, ["Mutable", ${initialName}], (M, _) => new M(_));
-	  main.variable(${
+  main.variable(observer(${mutableName})).define(${mutableName}, ["Mutable", ${initialName}], (M, _) => new M(_));
+  main.variable(${
 	    observeMutableValues ? `observer("${cellName}")` : `null`
 	  }).define("${cellName}", [${mutableName}], _ => _.generator);`;
 	        } else {
@@ -10554,19 +11658,19 @@ var dist = {exports: {}};
 	  } = params;
 	  const { importSrc, importMap } = ESMImports(moduleObject, resolveImportPath);
 	  return `${importSrc}export default function define(runtime, observer) {
-	  const main = runtime.module();
-	${ESMAttachments(
+  const main = runtime.module();
+${ESMAttachments(
 	  moduleObject,
 	  resolveFileAttachments,
 	  UNSAFE_allowJavascriptFileAttachments
 	)}
-	${ESMVariables(moduleObject, importMap, {
+${ESMVariables(moduleObject, importMap, {
 	  defineImportMarkdown,
 	  observeViewofValues,
 	  observeMutableValues
 	}) || ""}
-	  return main;
-	}`;
+  return main;
+}`;
 	}
 
 	function defaultResolveImportPath(path) {
@@ -10745,8 +11849,8 @@ var dist = {exports: {}};
 	          null,
 	          ["md"],
 	          md => md`~~~javascript
-	  ${importString}
-	  ~~~`
+  ${importString}
+  ~~~`
 	        );
 	      if (hasInjections) {
 	        const child = other.derive(injections, module);
@@ -16324,7 +17428,7 @@ pp.readWord = function() {
 
 // Acorn is a tiny, fast JavaScript parser written in JavaScript.
 
-var version = "8.8.0";
+var version = "8.8.1";
 
 Parser.acorn = {
   Parser: Parser,
@@ -18040,6 +19144,109 @@ function createQuartoJsxShim()
   };
 }
 
+/**
+ * @param typeMap [Object] Map of MIME type -> Array[extensions]
+ * @param ...
+ */
+function Mime$1() {
+  this._types = Object.create(null);
+  this._extensions = Object.create(null);
+
+  for (let i = 0; i < arguments.length; i++) {
+    this.define(arguments[i]);
+  }
+
+  this.define = this.define.bind(this);
+  this.getType = this.getType.bind(this);
+  this.getExtension = this.getExtension.bind(this);
+}
+
+/**
+ * Define mimetype -> extension mappings.  Each key is a mime-type that maps
+ * to an array of extensions associated with the type.  The first extension is
+ * used as the default extension for the type.
+ *
+ * e.g. mime.define({'audio/ogg', ['oga', 'ogg', 'spx']});
+ *
+ * If a type declares an extension that has already been defined, an error will
+ * be thrown.  To suppress this error and force the extension to be associated
+ * with the new type, pass `force`=true.  Alternatively, you may prefix the
+ * extension with "*" to map the type to extension, without mapping the
+ * extension to the type.
+ *
+ * e.g. mime.define({'audio/wav', ['wav']}, {'audio/x-wav', ['*wav']});
+ *
+ *
+ * @param map (Object) type definitions
+ * @param force (Boolean) if true, force overriding of existing definitions
+ */
+Mime$1.prototype.define = function(typeMap, force) {
+  for (let type in typeMap) {
+    let extensions = typeMap[type].map(function(t) {
+      return t.toLowerCase();
+    });
+    type = type.toLowerCase();
+
+    for (let i = 0; i < extensions.length; i++) {
+      const ext = extensions[i];
+
+      // '*' prefix = not the preferred type for this extension.  So fixup the
+      // extension, and skip it.
+      if (ext[0] === '*') {
+        continue;
+      }
+
+      if (!force && (ext in this._types)) {
+        throw new Error(
+          'Attempt to change mapping for "' + ext +
+          '" extension from "' + this._types[ext] + '" to "' + type +
+          '". Pass `force=true` to allow this, otherwise remove "' + ext +
+          '" from the list of extensions for "' + type + '".'
+        );
+      }
+
+      this._types[ext] = type;
+    }
+
+    // Use first extension as default
+    if (force || !this._extensions[type]) {
+      const ext = extensions[0];
+      this._extensions[type] = (ext[0] !== '*') ? ext : ext.substr(1);
+    }
+  }
+};
+
+/**
+ * Lookup a mime type based on extension
+ */
+Mime$1.prototype.getType = function(path) {
+  path = String(path);
+  let last = path.replace(/^.*[/\\]/, '').toLowerCase();
+  let ext = last.replace(/^.*\./, '').toLowerCase();
+
+  let hasPath = last.length < path.length;
+  let hasDot = ext.length < last.length - 1;
+
+  return (hasDot || !hasPath) && this._types[ext] || null;
+};
+
+/**
+ * Return file extension associated with a mime type
+ */
+Mime$1.prototype.getExtension = function(type) {
+  type = /^\s*([^;\s]*)/.test(type) && RegExp.$1;
+  return type && this._extensions[type.toLowerCase()] || null;
+};
+
+var Mime_1 = Mime$1;
+
+var standard = {"application/andrew-inset":["ez"],"application/applixware":["aw"],"application/atom+xml":["atom"],"application/atomcat+xml":["atomcat"],"application/atomdeleted+xml":["atomdeleted"],"application/atomsvc+xml":["atomsvc"],"application/atsc-dwd+xml":["dwd"],"application/atsc-held+xml":["held"],"application/atsc-rsat+xml":["rsat"],"application/bdoc":["bdoc"],"application/calendar+xml":["xcs"],"application/ccxml+xml":["ccxml"],"application/cdfx+xml":["cdfx"],"application/cdmi-capability":["cdmia"],"application/cdmi-container":["cdmic"],"application/cdmi-domain":["cdmid"],"application/cdmi-object":["cdmio"],"application/cdmi-queue":["cdmiq"],"application/cu-seeme":["cu"],"application/dash+xml":["mpd"],"application/davmount+xml":["davmount"],"application/docbook+xml":["dbk"],"application/dssc+der":["dssc"],"application/dssc+xml":["xdssc"],"application/ecmascript":["es","ecma"],"application/emma+xml":["emma"],"application/emotionml+xml":["emotionml"],"application/epub+zip":["epub"],"application/exi":["exi"],"application/express":["exp"],"application/fdt+xml":["fdt"],"application/font-tdpfr":["pfr"],"application/geo+json":["geojson"],"application/gml+xml":["gml"],"application/gpx+xml":["gpx"],"application/gxf":["gxf"],"application/gzip":["gz"],"application/hjson":["hjson"],"application/hyperstudio":["stk"],"application/inkml+xml":["ink","inkml"],"application/ipfix":["ipfix"],"application/its+xml":["its"],"application/java-archive":["jar","war","ear"],"application/java-serialized-object":["ser"],"application/java-vm":["class"],"application/javascript":["js","mjs"],"application/json":["json","map"],"application/json5":["json5"],"application/jsonml+json":["jsonml"],"application/ld+json":["jsonld"],"application/lgr+xml":["lgr"],"application/lost+xml":["lostxml"],"application/mac-binhex40":["hqx"],"application/mac-compactpro":["cpt"],"application/mads+xml":["mads"],"application/manifest+json":["webmanifest"],"application/marc":["mrc"],"application/marcxml+xml":["mrcx"],"application/mathematica":["ma","nb","mb"],"application/mathml+xml":["mathml"],"application/mbox":["mbox"],"application/mediaservercontrol+xml":["mscml"],"application/metalink+xml":["metalink"],"application/metalink4+xml":["meta4"],"application/mets+xml":["mets"],"application/mmt-aei+xml":["maei"],"application/mmt-usd+xml":["musd"],"application/mods+xml":["mods"],"application/mp21":["m21","mp21"],"application/mp4":["mp4s","m4p"],"application/msword":["doc","dot"],"application/mxf":["mxf"],"application/n-quads":["nq"],"application/n-triples":["nt"],"application/node":["cjs"],"application/octet-stream":["bin","dms","lrf","mar","so","dist","distz","pkg","bpk","dump","elc","deploy","exe","dll","deb","dmg","iso","img","msi","msp","msm","buffer"],"application/oda":["oda"],"application/oebps-package+xml":["opf"],"application/ogg":["ogx"],"application/omdoc+xml":["omdoc"],"application/onenote":["onetoc","onetoc2","onetmp","onepkg"],"application/oxps":["oxps"],"application/p2p-overlay+xml":["relo"],"application/patch-ops-error+xml":["xer"],"application/pdf":["pdf"],"application/pgp-encrypted":["pgp"],"application/pgp-signature":["asc","sig"],"application/pics-rules":["prf"],"application/pkcs10":["p10"],"application/pkcs7-mime":["p7m","p7c"],"application/pkcs7-signature":["p7s"],"application/pkcs8":["p8"],"application/pkix-attr-cert":["ac"],"application/pkix-cert":["cer"],"application/pkix-crl":["crl"],"application/pkix-pkipath":["pkipath"],"application/pkixcmp":["pki"],"application/pls+xml":["pls"],"application/postscript":["ai","eps","ps"],"application/provenance+xml":["provx"],"application/pskc+xml":["pskcxml"],"application/raml+yaml":["raml"],"application/rdf+xml":["rdf","owl"],"application/reginfo+xml":["rif"],"application/relax-ng-compact-syntax":["rnc"],"application/resource-lists+xml":["rl"],"application/resource-lists-diff+xml":["rld"],"application/rls-services+xml":["rs"],"application/route-apd+xml":["rapd"],"application/route-s-tsid+xml":["sls"],"application/route-usd+xml":["rusd"],"application/rpki-ghostbusters":["gbr"],"application/rpki-manifest":["mft"],"application/rpki-roa":["roa"],"application/rsd+xml":["rsd"],"application/rss+xml":["rss"],"application/rtf":["rtf"],"application/sbml+xml":["sbml"],"application/scvp-cv-request":["scq"],"application/scvp-cv-response":["scs"],"application/scvp-vp-request":["spq"],"application/scvp-vp-response":["spp"],"application/sdp":["sdp"],"application/senml+xml":["senmlx"],"application/sensml+xml":["sensmlx"],"application/set-payment-initiation":["setpay"],"application/set-registration-initiation":["setreg"],"application/shf+xml":["shf"],"application/sieve":["siv","sieve"],"application/smil+xml":["smi","smil"],"application/sparql-query":["rq"],"application/sparql-results+xml":["srx"],"application/srgs":["gram"],"application/srgs+xml":["grxml"],"application/sru+xml":["sru"],"application/ssdl+xml":["ssdl"],"application/ssml+xml":["ssml"],"application/swid+xml":["swidtag"],"application/tei+xml":["tei","teicorpus"],"application/thraud+xml":["tfi"],"application/timestamped-data":["tsd"],"application/toml":["toml"],"application/trig":["trig"],"application/ttml+xml":["ttml"],"application/ubjson":["ubj"],"application/urc-ressheet+xml":["rsheet"],"application/urc-targetdesc+xml":["td"],"application/voicexml+xml":["vxml"],"application/wasm":["wasm"],"application/widget":["wgt"],"application/winhlp":["hlp"],"application/wsdl+xml":["wsdl"],"application/wspolicy+xml":["wspolicy"],"application/xaml+xml":["xaml"],"application/xcap-att+xml":["xav"],"application/xcap-caps+xml":["xca"],"application/xcap-diff+xml":["xdf"],"application/xcap-el+xml":["xel"],"application/xcap-ns+xml":["xns"],"application/xenc+xml":["xenc"],"application/xhtml+xml":["xhtml","xht"],"application/xliff+xml":["xlf"],"application/xml":["xml","xsl","xsd","rng"],"application/xml-dtd":["dtd"],"application/xop+xml":["xop"],"application/xproc+xml":["xpl"],"application/xslt+xml":["*xsl","xslt"],"application/xspf+xml":["xspf"],"application/xv+xml":["mxml","xhvml","xvml","xvm"],"application/yang":["yang"],"application/yin+xml":["yin"],"application/zip":["zip"],"audio/3gpp":["*3gpp"],"audio/adpcm":["adp"],"audio/amr":["amr"],"audio/basic":["au","snd"],"audio/midi":["mid","midi","kar","rmi"],"audio/mobile-xmf":["mxmf"],"audio/mp3":["*mp3"],"audio/mp4":["m4a","mp4a"],"audio/mpeg":["mpga","mp2","mp2a","mp3","m2a","m3a"],"audio/ogg":["oga","ogg","spx","opus"],"audio/s3m":["s3m"],"audio/silk":["sil"],"audio/wav":["wav"],"audio/wave":["*wav"],"audio/webm":["weba"],"audio/xm":["xm"],"font/collection":["ttc"],"font/otf":["otf"],"font/ttf":["ttf"],"font/woff":["woff"],"font/woff2":["woff2"],"image/aces":["exr"],"image/apng":["apng"],"image/avif":["avif"],"image/bmp":["bmp"],"image/cgm":["cgm"],"image/dicom-rle":["drle"],"image/emf":["emf"],"image/fits":["fits"],"image/g3fax":["g3"],"image/gif":["gif"],"image/heic":["heic"],"image/heic-sequence":["heics"],"image/heif":["heif"],"image/heif-sequence":["heifs"],"image/hej2k":["hej2"],"image/hsj2":["hsj2"],"image/ief":["ief"],"image/jls":["jls"],"image/jp2":["jp2","jpg2"],"image/jpeg":["jpeg","jpg","jpe"],"image/jph":["jph"],"image/jphc":["jhc"],"image/jpm":["jpm"],"image/jpx":["jpx","jpf"],"image/jxr":["jxr"],"image/jxra":["jxra"],"image/jxrs":["jxrs"],"image/jxs":["jxs"],"image/jxsc":["jxsc"],"image/jxsi":["jxsi"],"image/jxss":["jxss"],"image/ktx":["ktx"],"image/ktx2":["ktx2"],"image/png":["png"],"image/sgi":["sgi"],"image/svg+xml":["svg","svgz"],"image/t38":["t38"],"image/tiff":["tif","tiff"],"image/tiff-fx":["tfx"],"image/webp":["webp"],"image/wmf":["wmf"],"message/disposition-notification":["disposition-notification"],"message/global":["u8msg"],"message/global-delivery-status":["u8dsn"],"message/global-disposition-notification":["u8mdn"],"message/global-headers":["u8hdr"],"message/rfc822":["eml","mime"],"model/3mf":["3mf"],"model/gltf+json":["gltf"],"model/gltf-binary":["glb"],"model/iges":["igs","iges"],"model/mesh":["msh","mesh","silo"],"model/mtl":["mtl"],"model/obj":["obj"],"model/step+xml":["stpx"],"model/step+zip":["stpz"],"model/step-xml+zip":["stpxz"],"model/stl":["stl"],"model/vrml":["wrl","vrml"],"model/x3d+binary":["*x3db","x3dbz"],"model/x3d+fastinfoset":["x3db"],"model/x3d+vrml":["*x3dv","x3dvz"],"model/x3d+xml":["x3d","x3dz"],"model/x3d-vrml":["x3dv"],"text/cache-manifest":["appcache","manifest"],"text/calendar":["ics","ifb"],"text/coffeescript":["coffee","litcoffee"],"text/css":["css"],"text/csv":["csv"],"text/html":["html","htm","shtml"],"text/jade":["jade"],"text/jsx":["jsx"],"text/less":["less"],"text/markdown":["markdown","md"],"text/mathml":["mml"],"text/mdx":["mdx"],"text/n3":["n3"],"text/plain":["txt","text","conf","def","list","log","in","ini"],"text/richtext":["rtx"],"text/rtf":["*rtf"],"text/sgml":["sgml","sgm"],"text/shex":["shex"],"text/slim":["slim","slm"],"text/spdx":["spdx"],"text/stylus":["stylus","styl"],"text/tab-separated-values":["tsv"],"text/troff":["t","tr","roff","man","me","ms"],"text/turtle":["ttl"],"text/uri-list":["uri","uris","urls"],"text/vcard":["vcard"],"text/vtt":["vtt"],"text/xml":["*xml"],"text/yaml":["yaml","yml"],"video/3gpp":["3gp","3gpp"],"video/3gpp2":["3g2"],"video/h261":["h261"],"video/h263":["h263"],"video/h264":["h264"],"video/iso.segment":["m4s"],"video/jpeg":["jpgv"],"video/jpm":["*jpm","jpgm"],"video/mj2":["mj2","mjp2"],"video/mp2t":["ts"],"video/mp4":["mp4","mp4v","mpg4"],"video/mpeg":["mpeg","mpg","mpe","m1v","m2v"],"video/ogg":["ogv"],"video/quicktime":["qt","mov"],"video/webm":["webm"]};
+
+var other = {"application/prs.cww":["cww"],"application/vnd.1000minds.decision-model+xml":["1km"],"application/vnd.3gpp.pic-bw-large":["plb"],"application/vnd.3gpp.pic-bw-small":["psb"],"application/vnd.3gpp.pic-bw-var":["pvb"],"application/vnd.3gpp2.tcap":["tcap"],"application/vnd.3m.post-it-notes":["pwn"],"application/vnd.accpac.simply.aso":["aso"],"application/vnd.accpac.simply.imp":["imp"],"application/vnd.acucobol":["acu"],"application/vnd.acucorp":["atc","acutc"],"application/vnd.adobe.air-application-installer-package+zip":["air"],"application/vnd.adobe.formscentral.fcdt":["fcdt"],"application/vnd.adobe.fxp":["fxp","fxpl"],"application/vnd.adobe.xdp+xml":["xdp"],"application/vnd.adobe.xfdf":["xfdf"],"application/vnd.ahead.space":["ahead"],"application/vnd.airzip.filesecure.azf":["azf"],"application/vnd.airzip.filesecure.azs":["azs"],"application/vnd.amazon.ebook":["azw"],"application/vnd.americandynamics.acc":["acc"],"application/vnd.amiga.ami":["ami"],"application/vnd.android.package-archive":["apk"],"application/vnd.anser-web-certificate-issue-initiation":["cii"],"application/vnd.anser-web-funds-transfer-initiation":["fti"],"application/vnd.antix.game-component":["atx"],"application/vnd.apple.installer+xml":["mpkg"],"application/vnd.apple.keynote":["key"],"application/vnd.apple.mpegurl":["m3u8"],"application/vnd.apple.numbers":["numbers"],"application/vnd.apple.pages":["pages"],"application/vnd.apple.pkpass":["pkpass"],"application/vnd.aristanetworks.swi":["swi"],"application/vnd.astraea-software.iota":["iota"],"application/vnd.audiograph":["aep"],"application/vnd.balsamiq.bmml+xml":["bmml"],"application/vnd.blueice.multipass":["mpm"],"application/vnd.bmi":["bmi"],"application/vnd.businessobjects":["rep"],"application/vnd.chemdraw+xml":["cdxml"],"application/vnd.chipnuts.karaoke-mmd":["mmd"],"application/vnd.cinderella":["cdy"],"application/vnd.citationstyles.style+xml":["csl"],"application/vnd.claymore":["cla"],"application/vnd.cloanto.rp9":["rp9"],"application/vnd.clonk.c4group":["c4g","c4d","c4f","c4p","c4u"],"application/vnd.cluetrust.cartomobile-config":["c11amc"],"application/vnd.cluetrust.cartomobile-config-pkg":["c11amz"],"application/vnd.commonspace":["csp"],"application/vnd.contact.cmsg":["cdbcmsg"],"application/vnd.cosmocaller":["cmc"],"application/vnd.crick.clicker":["clkx"],"application/vnd.crick.clicker.keyboard":["clkk"],"application/vnd.crick.clicker.palette":["clkp"],"application/vnd.crick.clicker.template":["clkt"],"application/vnd.crick.clicker.wordbank":["clkw"],"application/vnd.criticaltools.wbs+xml":["wbs"],"application/vnd.ctc-posml":["pml"],"application/vnd.cups-ppd":["ppd"],"application/vnd.curl.car":["car"],"application/vnd.curl.pcurl":["pcurl"],"application/vnd.dart":["dart"],"application/vnd.data-vision.rdz":["rdz"],"application/vnd.dbf":["dbf"],"application/vnd.dece.data":["uvf","uvvf","uvd","uvvd"],"application/vnd.dece.ttml+xml":["uvt","uvvt"],"application/vnd.dece.unspecified":["uvx","uvvx"],"application/vnd.dece.zip":["uvz","uvvz"],"application/vnd.denovo.fcselayout-link":["fe_launch"],"application/vnd.dna":["dna"],"application/vnd.dolby.mlp":["mlp"],"application/vnd.dpgraph":["dpg"],"application/vnd.dreamfactory":["dfac"],"application/vnd.ds-keypoint":["kpxx"],"application/vnd.dvb.ait":["ait"],"application/vnd.dvb.service":["svc"],"application/vnd.dynageo":["geo"],"application/vnd.ecowin.chart":["mag"],"application/vnd.enliven":["nml"],"application/vnd.epson.esf":["esf"],"application/vnd.epson.msf":["msf"],"application/vnd.epson.quickanime":["qam"],"application/vnd.epson.salt":["slt"],"application/vnd.epson.ssf":["ssf"],"application/vnd.eszigno3+xml":["es3","et3"],"application/vnd.ezpix-album":["ez2"],"application/vnd.ezpix-package":["ez3"],"application/vnd.fdf":["fdf"],"application/vnd.fdsn.mseed":["mseed"],"application/vnd.fdsn.seed":["seed","dataless"],"application/vnd.flographit":["gph"],"application/vnd.fluxtime.clip":["ftc"],"application/vnd.framemaker":["fm","frame","maker","book"],"application/vnd.frogans.fnc":["fnc"],"application/vnd.frogans.ltf":["ltf"],"application/vnd.fsc.weblaunch":["fsc"],"application/vnd.fujitsu.oasys":["oas"],"application/vnd.fujitsu.oasys2":["oa2"],"application/vnd.fujitsu.oasys3":["oa3"],"application/vnd.fujitsu.oasysgp":["fg5"],"application/vnd.fujitsu.oasysprs":["bh2"],"application/vnd.fujixerox.ddd":["ddd"],"application/vnd.fujixerox.docuworks":["xdw"],"application/vnd.fujixerox.docuworks.binder":["xbd"],"application/vnd.fuzzysheet":["fzs"],"application/vnd.genomatix.tuxedo":["txd"],"application/vnd.geogebra.file":["ggb"],"application/vnd.geogebra.tool":["ggt"],"application/vnd.geometry-explorer":["gex","gre"],"application/vnd.geonext":["gxt"],"application/vnd.geoplan":["g2w"],"application/vnd.geospace":["g3w"],"application/vnd.gmx":["gmx"],"application/vnd.google-apps.document":["gdoc"],"application/vnd.google-apps.presentation":["gslides"],"application/vnd.google-apps.spreadsheet":["gsheet"],"application/vnd.google-earth.kml+xml":["kml"],"application/vnd.google-earth.kmz":["kmz"],"application/vnd.grafeq":["gqf","gqs"],"application/vnd.groove-account":["gac"],"application/vnd.groove-help":["ghf"],"application/vnd.groove-identity-message":["gim"],"application/vnd.groove-injector":["grv"],"application/vnd.groove-tool-message":["gtm"],"application/vnd.groove-tool-template":["tpl"],"application/vnd.groove-vcard":["vcg"],"application/vnd.hal+xml":["hal"],"application/vnd.handheld-entertainment+xml":["zmm"],"application/vnd.hbci":["hbci"],"application/vnd.hhe.lesson-player":["les"],"application/vnd.hp-hpgl":["hpgl"],"application/vnd.hp-hpid":["hpid"],"application/vnd.hp-hps":["hps"],"application/vnd.hp-jlyt":["jlt"],"application/vnd.hp-pcl":["pcl"],"application/vnd.hp-pclxl":["pclxl"],"application/vnd.hydrostatix.sof-data":["sfd-hdstx"],"application/vnd.ibm.minipay":["mpy"],"application/vnd.ibm.modcap":["afp","listafp","list3820"],"application/vnd.ibm.rights-management":["irm"],"application/vnd.ibm.secure-container":["sc"],"application/vnd.iccprofile":["icc","icm"],"application/vnd.igloader":["igl"],"application/vnd.immervision-ivp":["ivp"],"application/vnd.immervision-ivu":["ivu"],"application/vnd.insors.igm":["igm"],"application/vnd.intercon.formnet":["xpw","xpx"],"application/vnd.intergeo":["i2g"],"application/vnd.intu.qbo":["qbo"],"application/vnd.intu.qfx":["qfx"],"application/vnd.ipunplugged.rcprofile":["rcprofile"],"application/vnd.irepository.package+xml":["irp"],"application/vnd.is-xpr":["xpr"],"application/vnd.isac.fcs":["fcs"],"application/vnd.jam":["jam"],"application/vnd.jcp.javame.midlet-rms":["rms"],"application/vnd.jisp":["jisp"],"application/vnd.joost.joda-archive":["joda"],"application/vnd.kahootz":["ktz","ktr"],"application/vnd.kde.karbon":["karbon"],"application/vnd.kde.kchart":["chrt"],"application/vnd.kde.kformula":["kfo"],"application/vnd.kde.kivio":["flw"],"application/vnd.kde.kontour":["kon"],"application/vnd.kde.kpresenter":["kpr","kpt"],"application/vnd.kde.kspread":["ksp"],"application/vnd.kde.kword":["kwd","kwt"],"application/vnd.kenameaapp":["htke"],"application/vnd.kidspiration":["kia"],"application/vnd.kinar":["kne","knp"],"application/vnd.koan":["skp","skd","skt","skm"],"application/vnd.kodak-descriptor":["sse"],"application/vnd.las.las+xml":["lasxml"],"application/vnd.llamagraphics.life-balance.desktop":["lbd"],"application/vnd.llamagraphics.life-balance.exchange+xml":["lbe"],"application/vnd.lotus-1-2-3":["123"],"application/vnd.lotus-approach":["apr"],"application/vnd.lotus-freelance":["pre"],"application/vnd.lotus-notes":["nsf"],"application/vnd.lotus-organizer":["org"],"application/vnd.lotus-screencam":["scm"],"application/vnd.lotus-wordpro":["lwp"],"application/vnd.macports.portpkg":["portpkg"],"application/vnd.mapbox-vector-tile":["mvt"],"application/vnd.mcd":["mcd"],"application/vnd.medcalcdata":["mc1"],"application/vnd.mediastation.cdkey":["cdkey"],"application/vnd.mfer":["mwf"],"application/vnd.mfmp":["mfm"],"application/vnd.micrografx.flo":["flo"],"application/vnd.micrografx.igx":["igx"],"application/vnd.mif":["mif"],"application/vnd.mobius.daf":["daf"],"application/vnd.mobius.dis":["dis"],"application/vnd.mobius.mbk":["mbk"],"application/vnd.mobius.mqy":["mqy"],"application/vnd.mobius.msl":["msl"],"application/vnd.mobius.plc":["plc"],"application/vnd.mobius.txf":["txf"],"application/vnd.mophun.application":["mpn"],"application/vnd.mophun.certificate":["mpc"],"application/vnd.mozilla.xul+xml":["xul"],"application/vnd.ms-artgalry":["cil"],"application/vnd.ms-cab-compressed":["cab"],"application/vnd.ms-excel":["xls","xlm","xla","xlc","xlt","xlw"],"application/vnd.ms-excel.addin.macroenabled.12":["xlam"],"application/vnd.ms-excel.sheet.binary.macroenabled.12":["xlsb"],"application/vnd.ms-excel.sheet.macroenabled.12":["xlsm"],"application/vnd.ms-excel.template.macroenabled.12":["xltm"],"application/vnd.ms-fontobject":["eot"],"application/vnd.ms-htmlhelp":["chm"],"application/vnd.ms-ims":["ims"],"application/vnd.ms-lrm":["lrm"],"application/vnd.ms-officetheme":["thmx"],"application/vnd.ms-outlook":["msg"],"application/vnd.ms-pki.seccat":["cat"],"application/vnd.ms-pki.stl":["*stl"],"application/vnd.ms-powerpoint":["ppt","pps","pot"],"application/vnd.ms-powerpoint.addin.macroenabled.12":["ppam"],"application/vnd.ms-powerpoint.presentation.macroenabled.12":["pptm"],"application/vnd.ms-powerpoint.slide.macroenabled.12":["sldm"],"application/vnd.ms-powerpoint.slideshow.macroenabled.12":["ppsm"],"application/vnd.ms-powerpoint.template.macroenabled.12":["potm"],"application/vnd.ms-project":["mpp","mpt"],"application/vnd.ms-word.document.macroenabled.12":["docm"],"application/vnd.ms-word.template.macroenabled.12":["dotm"],"application/vnd.ms-works":["wps","wks","wcm","wdb"],"application/vnd.ms-wpl":["wpl"],"application/vnd.ms-xpsdocument":["xps"],"application/vnd.mseq":["mseq"],"application/vnd.musician":["mus"],"application/vnd.muvee.style":["msty"],"application/vnd.mynfc":["taglet"],"application/vnd.neurolanguage.nlu":["nlu"],"application/vnd.nitf":["ntf","nitf"],"application/vnd.noblenet-directory":["nnd"],"application/vnd.noblenet-sealer":["nns"],"application/vnd.noblenet-web":["nnw"],"application/vnd.nokia.n-gage.ac+xml":["*ac"],"application/vnd.nokia.n-gage.data":["ngdat"],"application/vnd.nokia.n-gage.symbian.install":["n-gage"],"application/vnd.nokia.radio-preset":["rpst"],"application/vnd.nokia.radio-presets":["rpss"],"application/vnd.novadigm.edm":["edm"],"application/vnd.novadigm.edx":["edx"],"application/vnd.novadigm.ext":["ext"],"application/vnd.oasis.opendocument.chart":["odc"],"application/vnd.oasis.opendocument.chart-template":["otc"],"application/vnd.oasis.opendocument.database":["odb"],"application/vnd.oasis.opendocument.formula":["odf"],"application/vnd.oasis.opendocument.formula-template":["odft"],"application/vnd.oasis.opendocument.graphics":["odg"],"application/vnd.oasis.opendocument.graphics-template":["otg"],"application/vnd.oasis.opendocument.image":["odi"],"application/vnd.oasis.opendocument.image-template":["oti"],"application/vnd.oasis.opendocument.presentation":["odp"],"application/vnd.oasis.opendocument.presentation-template":["otp"],"application/vnd.oasis.opendocument.spreadsheet":["ods"],"application/vnd.oasis.opendocument.spreadsheet-template":["ots"],"application/vnd.oasis.opendocument.text":["odt"],"application/vnd.oasis.opendocument.text-master":["odm"],"application/vnd.oasis.opendocument.text-template":["ott"],"application/vnd.oasis.opendocument.text-web":["oth"],"application/vnd.olpc-sugar":["xo"],"application/vnd.oma.dd2+xml":["dd2"],"application/vnd.openblox.game+xml":["obgx"],"application/vnd.openofficeorg.extension":["oxt"],"application/vnd.openstreetmap.data+xml":["osm"],"application/vnd.openxmlformats-officedocument.presentationml.presentation":["pptx"],"application/vnd.openxmlformats-officedocument.presentationml.slide":["sldx"],"application/vnd.openxmlformats-officedocument.presentationml.slideshow":["ppsx"],"application/vnd.openxmlformats-officedocument.presentationml.template":["potx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":["xlsx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.template":["xltx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.document":["docx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.template":["dotx"],"application/vnd.osgeo.mapguide.package":["mgp"],"application/vnd.osgi.dp":["dp"],"application/vnd.osgi.subsystem":["esa"],"application/vnd.palm":["pdb","pqa","oprc"],"application/vnd.pawaafile":["paw"],"application/vnd.pg.format":["str"],"application/vnd.pg.osasli":["ei6"],"application/vnd.picsel":["efif"],"application/vnd.pmi.widget":["wg"],"application/vnd.pocketlearn":["plf"],"application/vnd.powerbuilder6":["pbd"],"application/vnd.previewsystems.box":["box"],"application/vnd.proteus.magazine":["mgz"],"application/vnd.publishare-delta-tree":["qps"],"application/vnd.pvi.ptid1":["ptid"],"application/vnd.quark.quarkxpress":["qxd","qxt","qwd","qwt","qxl","qxb"],"application/vnd.rar":["rar"],"application/vnd.realvnc.bed":["bed"],"application/vnd.recordare.musicxml":["mxl"],"application/vnd.recordare.musicxml+xml":["musicxml"],"application/vnd.rig.cryptonote":["cryptonote"],"application/vnd.rim.cod":["cod"],"application/vnd.rn-realmedia":["rm"],"application/vnd.rn-realmedia-vbr":["rmvb"],"application/vnd.route66.link66+xml":["link66"],"application/vnd.sailingtracker.track":["st"],"application/vnd.seemail":["see"],"application/vnd.sema":["sema"],"application/vnd.semd":["semd"],"application/vnd.semf":["semf"],"application/vnd.shana.informed.formdata":["ifm"],"application/vnd.shana.informed.formtemplate":["itp"],"application/vnd.shana.informed.interchange":["iif"],"application/vnd.shana.informed.package":["ipk"],"application/vnd.simtech-mindmapper":["twd","twds"],"application/vnd.smaf":["mmf"],"application/vnd.smart.teacher":["teacher"],"application/vnd.software602.filler.form+xml":["fo"],"application/vnd.solent.sdkm+xml":["sdkm","sdkd"],"application/vnd.spotfire.dxp":["dxp"],"application/vnd.spotfire.sfs":["sfs"],"application/vnd.stardivision.calc":["sdc"],"application/vnd.stardivision.draw":["sda"],"application/vnd.stardivision.impress":["sdd"],"application/vnd.stardivision.math":["smf"],"application/vnd.stardivision.writer":["sdw","vor"],"application/vnd.stardivision.writer-global":["sgl"],"application/vnd.stepmania.package":["smzip"],"application/vnd.stepmania.stepchart":["sm"],"application/vnd.sun.wadl+xml":["wadl"],"application/vnd.sun.xml.calc":["sxc"],"application/vnd.sun.xml.calc.template":["stc"],"application/vnd.sun.xml.draw":["sxd"],"application/vnd.sun.xml.draw.template":["std"],"application/vnd.sun.xml.impress":["sxi"],"application/vnd.sun.xml.impress.template":["sti"],"application/vnd.sun.xml.math":["sxm"],"application/vnd.sun.xml.writer":["sxw"],"application/vnd.sun.xml.writer.global":["sxg"],"application/vnd.sun.xml.writer.template":["stw"],"application/vnd.sus-calendar":["sus","susp"],"application/vnd.svd":["svd"],"application/vnd.symbian.install":["sis","sisx"],"application/vnd.syncml+xml":["xsm"],"application/vnd.syncml.dm+wbxml":["bdm"],"application/vnd.syncml.dm+xml":["xdm"],"application/vnd.syncml.dmddf+xml":["ddf"],"application/vnd.tao.intent-module-archive":["tao"],"application/vnd.tcpdump.pcap":["pcap","cap","dmp"],"application/vnd.tmobile-livetv":["tmo"],"application/vnd.trid.tpt":["tpt"],"application/vnd.triscape.mxs":["mxs"],"application/vnd.trueapp":["tra"],"application/vnd.ufdl":["ufd","ufdl"],"application/vnd.uiq.theme":["utz"],"application/vnd.umajin":["umj"],"application/vnd.unity":["unityweb"],"application/vnd.uoml+xml":["uoml"],"application/vnd.vcx":["vcx"],"application/vnd.visio":["vsd","vst","vss","vsw"],"application/vnd.visionary":["vis"],"application/vnd.vsf":["vsf"],"application/vnd.wap.wbxml":["wbxml"],"application/vnd.wap.wmlc":["wmlc"],"application/vnd.wap.wmlscriptc":["wmlsc"],"application/vnd.webturbo":["wtb"],"application/vnd.wolfram.player":["nbp"],"application/vnd.wordperfect":["wpd"],"application/vnd.wqd":["wqd"],"application/vnd.wt.stf":["stf"],"application/vnd.xara":["xar"],"application/vnd.xfdl":["xfdl"],"application/vnd.yamaha.hv-dic":["hvd"],"application/vnd.yamaha.hv-script":["hvs"],"application/vnd.yamaha.hv-voice":["hvp"],"application/vnd.yamaha.openscoreformat":["osf"],"application/vnd.yamaha.openscoreformat.osfpvg+xml":["osfpvg"],"application/vnd.yamaha.smaf-audio":["saf"],"application/vnd.yamaha.smaf-phrase":["spf"],"application/vnd.yellowriver-custom-menu":["cmp"],"application/vnd.zul":["zir","zirz"],"application/vnd.zzazz.deck+xml":["zaz"],"application/x-7z-compressed":["7z"],"application/x-abiword":["abw"],"application/x-ace-compressed":["ace"],"application/x-apple-diskimage":["*dmg"],"application/x-arj":["arj"],"application/x-authorware-bin":["aab","x32","u32","vox"],"application/x-authorware-map":["aam"],"application/x-authorware-seg":["aas"],"application/x-bcpio":["bcpio"],"application/x-bdoc":["*bdoc"],"application/x-bittorrent":["torrent"],"application/x-blorb":["blb","blorb"],"application/x-bzip":["bz"],"application/x-bzip2":["bz2","boz"],"application/x-cbr":["cbr","cba","cbt","cbz","cb7"],"application/x-cdlink":["vcd"],"application/x-cfs-compressed":["cfs"],"application/x-chat":["chat"],"application/x-chess-pgn":["pgn"],"application/x-chrome-extension":["crx"],"application/x-cocoa":["cco"],"application/x-conference":["nsc"],"application/x-cpio":["cpio"],"application/x-csh":["csh"],"application/x-debian-package":["*deb","udeb"],"application/x-dgc-compressed":["dgc"],"application/x-director":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"],"application/x-doom":["wad"],"application/x-dtbncx+xml":["ncx"],"application/x-dtbook+xml":["dtb"],"application/x-dtbresource+xml":["res"],"application/x-dvi":["dvi"],"application/x-envoy":["evy"],"application/x-eva":["eva"],"application/x-font-bdf":["bdf"],"application/x-font-ghostscript":["gsf"],"application/x-font-linux-psf":["psf"],"application/x-font-pcf":["pcf"],"application/x-font-snf":["snf"],"application/x-font-type1":["pfa","pfb","pfm","afm"],"application/x-freearc":["arc"],"application/x-futuresplash":["spl"],"application/x-gca-compressed":["gca"],"application/x-glulx":["ulx"],"application/x-gnumeric":["gnumeric"],"application/x-gramps-xml":["gramps"],"application/x-gtar":["gtar"],"application/x-hdf":["hdf"],"application/x-httpd-php":["php"],"application/x-install-instructions":["install"],"application/x-iso9660-image":["*iso"],"application/x-iwork-keynote-sffkey":["*key"],"application/x-iwork-numbers-sffnumbers":["*numbers"],"application/x-iwork-pages-sffpages":["*pages"],"application/x-java-archive-diff":["jardiff"],"application/x-java-jnlp-file":["jnlp"],"application/x-keepass2":["kdbx"],"application/x-latex":["latex"],"application/x-lua-bytecode":["luac"],"application/x-lzh-compressed":["lzh","lha"],"application/x-makeself":["run"],"application/x-mie":["mie"],"application/x-mobipocket-ebook":["prc","mobi"],"application/x-ms-application":["application"],"application/x-ms-shortcut":["lnk"],"application/x-ms-wmd":["wmd"],"application/x-ms-wmz":["wmz"],"application/x-ms-xbap":["xbap"],"application/x-msaccess":["mdb"],"application/x-msbinder":["obd"],"application/x-mscardfile":["crd"],"application/x-msclip":["clp"],"application/x-msdos-program":["*exe"],"application/x-msdownload":["*exe","*dll","com","bat","*msi"],"application/x-msmediaview":["mvb","m13","m14"],"application/x-msmetafile":["*wmf","*wmz","*emf","emz"],"application/x-msmoney":["mny"],"application/x-mspublisher":["pub"],"application/x-msschedule":["scd"],"application/x-msterminal":["trm"],"application/x-mswrite":["wri"],"application/x-netcdf":["nc","cdf"],"application/x-ns-proxy-autoconfig":["pac"],"application/x-nzb":["nzb"],"application/x-perl":["pl","pm"],"application/x-pilot":["*prc","*pdb"],"application/x-pkcs12":["p12","pfx"],"application/x-pkcs7-certificates":["p7b","spc"],"application/x-pkcs7-certreqresp":["p7r"],"application/x-rar-compressed":["*rar"],"application/x-redhat-package-manager":["rpm"],"application/x-research-info-systems":["ris"],"application/x-sea":["sea"],"application/x-sh":["sh"],"application/x-shar":["shar"],"application/x-shockwave-flash":["swf"],"application/x-silverlight-app":["xap"],"application/x-sql":["sql"],"application/x-stuffit":["sit"],"application/x-stuffitx":["sitx"],"application/x-subrip":["srt"],"application/x-sv4cpio":["sv4cpio"],"application/x-sv4crc":["sv4crc"],"application/x-t3vm-image":["t3"],"application/x-tads":["gam"],"application/x-tar":["tar"],"application/x-tcl":["tcl","tk"],"application/x-tex":["tex"],"application/x-tex-tfm":["tfm"],"application/x-texinfo":["texinfo","texi"],"application/x-tgif":["*obj"],"application/x-ustar":["ustar"],"application/x-virtualbox-hdd":["hdd"],"application/x-virtualbox-ova":["ova"],"application/x-virtualbox-ovf":["ovf"],"application/x-virtualbox-vbox":["vbox"],"application/x-virtualbox-vbox-extpack":["vbox-extpack"],"application/x-virtualbox-vdi":["vdi"],"application/x-virtualbox-vhd":["vhd"],"application/x-virtualbox-vmdk":["vmdk"],"application/x-wais-source":["src"],"application/x-web-app-manifest+json":["webapp"],"application/x-x509-ca-cert":["der","crt","pem"],"application/x-xfig":["fig"],"application/x-xliff+xml":["*xlf"],"application/x-xpinstall":["xpi"],"application/x-xz":["xz"],"application/x-zmachine":["z1","z2","z3","z4","z5","z6","z7","z8"],"audio/vnd.dece.audio":["uva","uvva"],"audio/vnd.digital-winds":["eol"],"audio/vnd.dra":["dra"],"audio/vnd.dts":["dts"],"audio/vnd.dts.hd":["dtshd"],"audio/vnd.lucent.voice":["lvp"],"audio/vnd.ms-playready.media.pya":["pya"],"audio/vnd.nuera.ecelp4800":["ecelp4800"],"audio/vnd.nuera.ecelp7470":["ecelp7470"],"audio/vnd.nuera.ecelp9600":["ecelp9600"],"audio/vnd.rip":["rip"],"audio/x-aac":["aac"],"audio/x-aiff":["aif","aiff","aifc"],"audio/x-caf":["caf"],"audio/x-flac":["flac"],"audio/x-m4a":["*m4a"],"audio/x-matroska":["mka"],"audio/x-mpegurl":["m3u"],"audio/x-ms-wax":["wax"],"audio/x-ms-wma":["wma"],"audio/x-pn-realaudio":["ram","ra"],"audio/x-pn-realaudio-plugin":["rmp"],"audio/x-realaudio":["*ra"],"audio/x-wav":["*wav"],"chemical/x-cdx":["cdx"],"chemical/x-cif":["cif"],"chemical/x-cmdf":["cmdf"],"chemical/x-cml":["cml"],"chemical/x-csml":["csml"],"chemical/x-xyz":["xyz"],"image/prs.btif":["btif"],"image/prs.pti":["pti"],"image/vnd.adobe.photoshop":["psd"],"image/vnd.airzip.accelerator.azv":["azv"],"image/vnd.dece.graphic":["uvi","uvvi","uvg","uvvg"],"image/vnd.djvu":["djvu","djv"],"image/vnd.dvb.subtitle":["*sub"],"image/vnd.dwg":["dwg"],"image/vnd.dxf":["dxf"],"image/vnd.fastbidsheet":["fbs"],"image/vnd.fpx":["fpx"],"image/vnd.fst":["fst"],"image/vnd.fujixerox.edmics-mmr":["mmr"],"image/vnd.fujixerox.edmics-rlc":["rlc"],"image/vnd.microsoft.icon":["ico"],"image/vnd.ms-dds":["dds"],"image/vnd.ms-modi":["mdi"],"image/vnd.ms-photo":["wdp"],"image/vnd.net-fpx":["npx"],"image/vnd.pco.b16":["b16"],"image/vnd.tencent.tap":["tap"],"image/vnd.valve.source.texture":["vtf"],"image/vnd.wap.wbmp":["wbmp"],"image/vnd.xiff":["xif"],"image/vnd.zbrush.pcx":["pcx"],"image/x-3ds":["3ds"],"image/x-cmu-raster":["ras"],"image/x-cmx":["cmx"],"image/x-freehand":["fh","fhc","fh4","fh5","fh7"],"image/x-icon":["*ico"],"image/x-jng":["jng"],"image/x-mrsid-image":["sid"],"image/x-ms-bmp":["*bmp"],"image/x-pcx":["*pcx"],"image/x-pict":["pic","pct"],"image/x-portable-anymap":["pnm"],"image/x-portable-bitmap":["pbm"],"image/x-portable-graymap":["pgm"],"image/x-portable-pixmap":["ppm"],"image/x-rgb":["rgb"],"image/x-tga":["tga"],"image/x-xbitmap":["xbm"],"image/x-xpixmap":["xpm"],"image/x-xwindowdump":["xwd"],"message/vnd.wfa.wsc":["wsc"],"model/vnd.collada+xml":["dae"],"model/vnd.dwf":["dwf"],"model/vnd.gdl":["gdl"],"model/vnd.gtw":["gtw"],"model/vnd.mts":["mts"],"model/vnd.opengex":["ogex"],"model/vnd.parasolid.transmit.binary":["x_b"],"model/vnd.parasolid.transmit.text":["x_t"],"model/vnd.sap.vds":["vds"],"model/vnd.usdz+zip":["usdz"],"model/vnd.valve.source.compiled-map":["bsp"],"model/vnd.vtu":["vtu"],"text/prs.lines.tag":["dsc"],"text/vnd.curl":["curl"],"text/vnd.curl.dcurl":["dcurl"],"text/vnd.curl.mcurl":["mcurl"],"text/vnd.curl.scurl":["scurl"],"text/vnd.dvb.subtitle":["sub"],"text/vnd.fly":["fly"],"text/vnd.fmi.flexstor":["flx"],"text/vnd.graphviz":["gv"],"text/vnd.in3d.3dml":["3dml"],"text/vnd.in3d.spot":["spot"],"text/vnd.sun.j2me.app-descriptor":["jad"],"text/vnd.wap.wml":["wml"],"text/vnd.wap.wmlscript":["wmls"],"text/x-asm":["s","asm"],"text/x-c":["c","cc","cxx","cpp","h","hh","dic"],"text/x-component":["htc"],"text/x-fortran":["f","for","f77","f90"],"text/x-handlebars-template":["hbs"],"text/x-java-source":["java"],"text/x-lua":["lua"],"text/x-markdown":["mkd"],"text/x-nfo":["nfo"],"text/x-opml":["opml"],"text/x-org":["*org"],"text/x-pascal":["p","pas"],"text/x-processing":["pde"],"text/x-sass":["sass"],"text/x-scss":["scss"],"text/x-setext":["etx"],"text/x-sfv":["sfv"],"text/x-suse-ymp":["ymp"],"text/x-uuencode":["uu"],"text/x-vcalendar":["vcs"],"text/x-vcard":["vcf"],"video/vnd.dece.hd":["uvh","uvvh"],"video/vnd.dece.mobile":["uvm","uvvm"],"video/vnd.dece.pd":["uvp","uvvp"],"video/vnd.dece.sd":["uvs","uvvs"],"video/vnd.dece.video":["uvv","uvvv"],"video/vnd.dvb.file":["dvb"],"video/vnd.fvt":["fvt"],"video/vnd.mpegurl":["mxu","m4u"],"video/vnd.ms-playready.media.pyv":["pyv"],"video/vnd.uvvu.mp4":["uvu","uvvu"],"video/vnd.vivo":["viv"],"video/x-f4v":["f4v"],"video/x-fli":["fli"],"video/x-flv":["flv"],"video/x-m4v":["m4v"],"video/x-matroska":["mkv","mk3d","mks"],"video/x-mng":["mng"],"video/x-ms-asf":["asf","asx"],"video/x-ms-vob":["vob"],"video/x-ms-wm":["wm"],"video/x-ms-wmv":["wmv"],"video/x-ms-wmx":["wmx"],"video/x-ms-wvx":["wvx"],"video/x-msvideo":["avi"],"video/x-sgi-movie":["movie"],"video/x-smv":["smv"],"x-conference/x-cooltalk":["ice"]};
+
+let Mime = Mime_1;
+var mime = new Mime(standard, other);
+
 /*global Shiny, $, DOMParser, MutationObserver, URL
  *
  * quarto-ojs.js
@@ -18047,6 +19254,62 @@ function createQuartoJsxShim()
  * Copyright (C) 2021 RStudio, PBC
  *
  */
+
+//////////////////////////////////////////////////////////////////////////////
+
+function displayOJSWarning(warning)
+{
+  const cells = [];
+  for (
+    const content of document.querySelectorAll('script[type="ojs-module-contents"]')
+  ) {
+    for (const cellJson of JSON.parse(content.text).contents) {
+      let cell = document.getElementById(cellJson.cellName) || document.getElementById(`${cellJson.cellName}-1`);
+      if (!cell) {
+        // give up
+        continue;
+      }
+      cells.push(cell);
+    }
+  }
+
+  debugger;
+  cells.forEach((cell) => {
+    debugger;
+    cell.innerHTML = "";
+
+    const message = warning();
+
+    cell.appendChild(
+      calloutBlock({
+        type: "error",
+        message
+      })
+    );
+  });
+}
+
+function displayQtWebEngineError() {
+  displayOJSWarning(() => {
+    const message = document.createElement("div");
+    message.appendChild(document.createTextNode("This document uses OJS, which requires JavaScript features not present in this version of QtWebEngine. If you're using RStudio IDE, please upgrade to a "));
+    const link = document.createElement("a");
+    link.appendChild(document.createTextNode("2022.12 build"));
+    link.href = "https://dailies.rstudio.com/rstudio/elsbeth-geranium/";
+    message.appendChild(link);
+    message.appendChild(document.createTextNode("."));
+    return message;
+  });
+}
+
+function displayFileProtocolError() {
+  displayOJSWarning(() => {
+    const message = document.createElement("div");
+    message.appendChild(document.createTextNode("This document uses OJS, which requires JavaScript features disabled when running in file://... URLs. In order for these features to work, run this document in a web server."));
+    return message;
+  });
+}
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Quarto-specific code starts here.
@@ -18426,9 +19689,7 @@ class QuartoOJSConnector extends OJSConnector {
             cellOutputDisplay = cellDiv;
           }
         }
-        const forceShowDeclarations = !(
-          cellDiv && cellDiv.dataset.output !== "all"
-        );
+        const forceShowDeclarations = (!cellDiv) || (cellDiv.dataset.output === "all");
 
         const config = { childList: true };
         const callback = function (mutationsList) {
@@ -18571,6 +19832,18 @@ function createRuntime() {
   const quartoOjsGlobal = window._ojs;
   const isShiny = window.Shiny !== undefined;
 
+  // Are we QtWebEngine? bail
+  if (window.navigator.userAgent.includes("QtWebEngine")) {
+    displayQtWebEngineError();
+    return;
+  }
+
+  // Are we file://? bail
+  if (window.location.protocol === "file:") {
+    displayFileProtocolError();
+    return;
+  }
+
   // Are we shiny?
   if (isShiny) {
     quartoOjsGlobal.hasShiny = true;
@@ -18594,14 +19867,32 @@ function createRuntime() {
     const keys = Object.keys(df);
     return df[keys[0]]
       .map((v, i) =>
-        Object.fromEntries(keys.map((key) => [key, df[key][i] || undefined]))
-      )
+        Object.fromEntries(keys.map((key) => {
+          const v = df[key][i];
+          const result = v === null ? undefined : v;
+          return [key, result];
+        })))
       .filter((v) => !Object.values(v).every((e) => e === undefined));
   }
   lib.transpose = () => transpose;
 
-  const mainEl = document.querySelector("main");
+  // TODO this should be user-configurable, so that we can actually 
+  // make it work in arbitrary layouts.
+  // There's probably a slick reactive trick to make the element
+  // user settable. 
+  //
+  // Right now we support quarto's standard HTML formats
+
+  const mainEl = (document.querySelector("main") // html
+   || document.querySelector("div.reveal")       // reveal
+   || document.querySelector("body"));           // fall-through
+
   function width() {
+    if (mainEl === null) {
+      return lib.Generators.observe((change) => {
+        change(undefined);
+      });
+    }
     return lib.Generators.observe(function (change) {
       var width = change(mainEl.clientWidth);
       function resized() {
@@ -18683,17 +19974,27 @@ function createRuntime() {
       return localResolver[n];
     }
 
-    if (n.startsWith("/")) {
-      // docToRoot can be empty, in which case naive concatenation creates
-      // an absolute path.
-      if (quartoOjsGlobal.paths.docToRoot === "") {
-        return `.${n}`;
+    const name = (() => {
+      if (n.startsWith("/")) {
+        // docToRoot can be empty, in which case naive concatenation creates
+        // an absolute path.
+        if (quartoOjsGlobal.paths.docToRoot === "") {
+          return `.${n}`;
+        } else {
+          return `${quartoOjsGlobal.paths.docToRoot}${n}`;
+        }
       } else {
-        return `${quartoOjsGlobal.paths.docToRoot}${n}`;
-      }
-    } else {
-      return n;
+        return n;
+      }  
+    })();
+
+    const mimeType = mime.getType(name);
+
+    return {
+      url: name,
+      mimeType: mimeType,
     }
+
   }
   lib.FileAttachment = () => FileAttachments(fileAttachmentPathResolver);
 
