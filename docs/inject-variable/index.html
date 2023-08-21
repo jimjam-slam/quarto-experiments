@@ -194,12 +194,116 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">// define another variable that takes an argument</span></span>
 <span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> b <span class="op">=</span> module<span class="op">.</span><span class="fu">variable</span>()<span class="op">;</span></span>
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>b<span class="op">.</span><span class="fu">define</span>([<span class="st">"foo"</span>]<span class="op">,</span> foo <span class="kw">=&gt;</span> foo <span class="op">*</span> <span class="dv">2</span>)<span class="op">;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>Okay, let’s try to register a new value using the Quarto OJS connector module:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode html code-with-copy"><code class="sourceCode html"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;script&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">// wait 'til dom content is loaded before trying to touch the ojs module</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">addEventListener</span>(<span class="st">"DOMContentLoaded"</span><span class="op">,</span> (<span class="bu">event</span>) <span class="kw">=&gt;</span> {</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">"DOM content loaded, checking for OJS module"</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="co">// check for the ojs connector first</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> ojsModule <span class="op">=</span> <span class="bu">window</span><span class="op">.</span><span class="at">_ojs</span><span class="op">?.</span><span class="at">ojsConnector</span><span class="op">?.</span><span class="at">mainModule</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (ojsModule <span class="op">===</span> <span class="kw">undefined</span>) {</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>      <span class="bu">console</span><span class="op">.</span><span class="fu">error</span>(<span class="st">"Quarto OJS module not found"</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>      <span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">"Quarto OJS module found!"</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="co">// register the var</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> myVar <span class="op">=</span> ojsModule<span class="op">.</span><span class="fu">variable</span>()<span class="op">;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    myVar<span class="op">.</span><span class="fu">define</span>(<span class="st">"myVar"</span><span class="op">,</span> () <span class="kw">=&gt;</span> {</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>      <span class="kw">async</span> <span class="kw">function</span><span class="op">*</span> <span class="fu">myGen</span>() {</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="kw">yield</span> <span class="dv">1</span><span class="op">;</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> (<span class="kw">true</span>) {</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>          <span class="kw">yield</span> Promises<span class="op">.</span><span class="fu">delay</span>(<span class="dv">1000</span><span class="op">,</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">random</span>())<span class="op">;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    })<span class="op">;</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="co">// let's try a different strategy:</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>    <span class="co">// calling variable.define() on the timer instead</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">const</span> anotherVar <span class="op">=</span> ojsModule<span class="op">.</span><span class="fu">variable</span>()<span class="op">;</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    anotherVar<span class="op">.</span><span class="fu">define</span>(<span class="st">"anotherVar"</span><span class="op">,</span> <span class="dv">23</span>)<span class="op">;</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="pp">setInterval</span>(() <span class="kw">=&gt;</span> {</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>      anotherVar<span class="op">.</span><span class="fu">define</span>(<span class="st">"anotherVar"</span><span class="op">,</span> <span class="bu">Math</span><span class="op">.</span><span class="fu">random</span>())<span class="op">;</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span> <span class="dv">1000</span>)<span class="op">;</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  })<span class="op">;</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="kw">&lt;/script&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<script>
+
+  // wait 'til dom content is loaded before trying to touch the ojs module
+  addEventListener("DOMContentLoaded", (event) => {
+    console.log("DOM content loaded, checking for OJS module")
+
+    // check for the ojs connector first
+    const ojsModule = window._ojs?.ojsConnector?.mainModule
+    if (ojsModule === undefined) {
+      console.error("Quarto OJS module not found")
+    } else {
+      console.log("Quarto OJS module found!")
+    }
+  
+    // register the var
+    const myVar = ojsModule.variable();
+    myVar.define("myVar", () => {
+      async function* myGen() {
+        yield 1;
+        while (true) {
+          yield Promises.delay(1000, Math.random());
+        }
+      }
+    });
+
+    // let's try a different strategy:
+    // calling variable.define() on the timer instead
+    const anotherVar = ojsModule.variable();
+    anotherVar.define("anotherVar", 23);
+
+    setInterval(() => {
+      anotherVar.define("anotherVar", Math.random());
+    }, 1000);
+
+  });
 
 
+</script>
+<p>What’s the value of <code>myVar</code>? It’s <span><span id="ojs-element-id-1"></span>!</span> And <code>anotherVar</code> is <span><span id="ojs-element-id-2"></span>.</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5" data-startfrom="135" data-source-offset="-0"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 134;"><span id="cb5-135"><a href="#cb5-135" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">"myVar is "</span> <span class="op">+</span> myVar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-2-1" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb6" data-startfrom="136" data-source-offset="-33"><pre class="sourceCode js code-with-copy"><code class="sourceCode javascript" style="counter-reset: source-line 135;"><span id="cb6-136"><a href="#cb6-136" aria-hidden="true" tabindex="-1"></a><span class="bu">console</span><span class="op">.</span><span class="fu">log</span>(<span class="st">"anotherVar is "</span> <span class="op">+</span> anotherVar)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display hidden">
+<div>
+<div id="ojs-cell-2-2" data-nodetype="expression">
+
+</div>
+</div>
+</div>
+</div>
+<p>Okay, so I’m able to call <code>variable.define()</code> on a timer and just keep updating it to a new constant (that’s what <code>anotherVar</code> is doing), but I’m having trouble defining the variable once to use a generator (which could potentially improve performance, but I’m not sure), as in <code>myVar</code>.</p>
+<p>I think the <code>anotherVar</code> strategy should be enough for me: I’ll call <code>variable.define</code> inside the callback for our framework and we’ll be cookin’ with gas 🥳</p>
+
+
+<script type="ojs-module-contents">
+{"contents":[
+  {"methodName":"interpret","inline":"true","source":"htl.html`<span>${myVar}</span>`", "cellName":"ojs-element-id-1"}
+,
+  {"methodName":"interpret","inline":"true","source":"htl.html`<span>${anotherVar}</span>`", "cellName":"ojs-element-id-2"}
+]}
+</script>
 
 </main> <!-- /main -->
 <script type="ojs-module-contents">
-{"contents":[{"methodName":"interpret","cellName":"ojs-cell-1","inline":false,"source":"myMessage = 23\n"}]}
+{"contents":[{"methodName":"interpret","cellName":"ojs-cell-1","inline":false,"source":"myMessage = 23\n"},{"methodName":"interpret","cellName":"ojs-cell-2","inline":false,"source":"console.log(\"myVar is \" + myVar)\nconsole.log(\"anotherVar is \" + anotherVar)\n"}]}
 </script>
 <script type="module">
 if (window.location.protocol === "file:") { alert("The OJS runtime does not work with file:// URLs. Please use a web server to view this document."); }

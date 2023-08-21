@@ -44,3 +44,98 @@ a.define("foo", 42);
 const b = module.variable();
 b.define(["foo"], foo => foo * 2);
 ```
+
+Okay, let's try to register a new value using the Quarto OJS connector module:
+
+```html
+<script>
+
+  // wait 'til dom content is loaded before trying to touch the ojs module
+  addEventListener("DOMContentLoaded", (event) => {
+    console.log("DOM content loaded, checking for OJS module")
+
+    // check for the ojs connector first
+    const ojsModule = window._ojs?.ojsConnector?.mainModule
+    if (ojsModule === undefined) {
+      console.error("Quarto OJS module not found")
+    } else {
+      console.log("Quarto OJS module found!")
+    }
+  
+    // register the var
+    const myVar = ojsModule.variable();
+    myVar.define("myVar", () => {
+      async function* myGen() {
+        yield 1;
+        while (true) {
+          yield Promises.delay(1000, Math.random());
+        }
+      }
+    });
+
+    // let's try a different strategy:
+    // calling variable.define() on the timer instead
+    const anotherVar = ojsModule.variable();
+    anotherVar.define("anotherVar", 23);
+
+    setInterval(() => {
+      anotherVar.define("anotherVar", Math.random());
+    }, 1000);
+
+  });
+
+</script>
+```
+
+```{=html}
+<script>
+
+  // wait 'til dom content is loaded before trying to touch the ojs module
+  addEventListener("DOMContentLoaded", (event) => {
+    console.log("DOM content loaded, checking for OJS module")
+
+    // check for the ojs connector first
+    const ojsModule = window._ojs?.ojsConnector?.mainModule
+    if (ojsModule === undefined) {
+      console.error("Quarto OJS module not found")
+    } else {
+      console.log("Quarto OJS module found!")
+    }
+  
+    // register the var
+    const myVar = ojsModule.variable();
+    myVar.define("myVar", () => {
+      async function* myGen() {
+        yield 1;
+        while (true) {
+          yield Promises.delay(1000, Math.random());
+        }
+      }
+    });
+
+    // let's try a different strategy:
+    // calling variable.define() on the timer instead
+    const anotherVar = ojsModule.variable();
+    anotherVar.define("anotherVar", 23);
+
+    setInterval(() => {
+      anotherVar.define("anotherVar", Math.random());
+    }, 1000);
+
+  });
+
+
+</script>
+```
+
+What's the value of `myVar`? It's ${myVar}! And `anotherVar` is ${anotherVar}.
+
+```{ojs}
+//| output: false
+console.log("myVar is " + myVar)
+console.log("anotherVar is " + anotherVar)
+```
+
+Okay, so I'm able to call `variable.define()` on a timer and just keep updating it to a new constant (that's what `anotherVar` is doing), but I'm having trouble defining the variable once to use a generator (which could potentially improve performance, but I'm not sure), as in `myVar`.
+
+I think the `anotherVar` strategy should be enough for me: I'll call `variable.define` inside the callback for our framework and we'll be cookin' with gas 🥳
